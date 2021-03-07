@@ -17,10 +17,11 @@ file /home/example_user/example.cpp
 使用时需要config.yaml(wxsend.cpp和server.cpp都使用)，把wxsend和server放在同一目录  
 
 库：
+```
 	tinyxml2: tinyxml2-2.1.0
 	openssl: openssl-1.0.1h
 	yaml-cpp : yaml-cpp 0.6.3-2
-
+```
 ## 已知不足
 如果把wxsend写成成员函数，libcurl会segmentation fault，暂不知如何解决，所以wxsend单独编译  
 因此，也可以在命令行中单独调用
