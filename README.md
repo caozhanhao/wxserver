@@ -1,39 +1,39 @@
-# ÆóÒµÎ¢ĞÅ»Ø¸´ÏûÏ¢·şÎñÆ÷
+# ä¼ä¸šå¾®ä¿¡å›å¤æ¶ˆæ¯æœåŠ¡å™¨
 
-## ¹¦ÄÜ
+## åŠŸèƒ½
 2021.3.7
 
-ÔËĞĞÊ±¿ÉÒÔÍ¨¹ı Î¢ĞÅ/ÆóÒµÎ¢ĞÅ ÏòÓ¦ÓÃ·¢ËÍÏûÏ¢£¬³ÌĞòÊÕµ½ÏûÏ¢»áÌáÊ¾¡£
-Èç¹ûÊÕµ½config.yamlÖĞ¶¨ÒåµÄ×Ô¶¯»Ø¸´£¬»á»Ø¸´Ö¸¶¨ÄÚÈİ¡£
-Èç¹ûÊÕµ½config.yamlÖĞ¶¨ÒåµÄ¹ÜÀíÔ±·¢ËÍµÄ pic/file £¬»á·¢ËÍÖ¸¶¨Í¼Æ¬»òÎÄ¼ş¡£
-Àı(ÏòÆóÒµÎ¢ĞÅÓ¦ÓÃ·¢ËÍ):
+è¿è¡Œæ—¶å¯ä»¥é€šè¿‡ å¾®ä¿¡/ä¼ä¸šå¾®ä¿¡ å‘åº”ç”¨å‘é€æ¶ˆæ¯ï¼Œç¨‹åºæ”¶åˆ°æ¶ˆæ¯ä¼šæç¤ºã€‚
+å¦‚æœæ”¶åˆ°config.yamlä¸­å®šä¹‰çš„è‡ªåŠ¨å›å¤ï¼Œä¼šå›å¤æŒ‡å®šå†…å®¹ã€‚
+å¦‚æœæ”¶åˆ°config.yamlä¸­å®šä¹‰çš„ç®¡ç†å‘˜å‘é€çš„ pic/file ï¼Œä¼šå‘é€æŒ‡å®šå›¾ç‰‡æˆ–æ–‡ä»¶ã€‚
+ä¾‹(å‘ä¼ä¸šå¾®ä¿¡åº”ç”¨å‘é€):
 ```
 image /home/example_user/example.jpg
 file /home/example_user/example.cpp
 ```
-ÏàÓ¦µÄÃüÁîÔÚconfig.yamlµÄcommandÖĞ£¬Ä¿Ç°Ö»²âÊÔÁËfile(ÎÄ¼ş)ºÍimage(Í¼Æ¬)
+ç›¸åº”çš„å‘½ä»¤åœ¨config.yamlçš„commandä¸­ï¼Œç›®å‰åªæµ‹è¯•äº†file(æ–‡ä»¶)å’Œimage(å›¾ç‰‡)
 
-## ÒÀÀµ
-Ê¹ÓÃÊ±ĞèÒªconfig.yaml(wxsend.cppºÍserver.cpp¶¼Ê¹ÓÃ)£¬°ÑwxsendºÍserver·ÅÔÚÍ¬Ò»Ä¿Â¼  
+## ä¾èµ–
+ä½¿ç”¨æ—¶éœ€è¦config.yaml(wxsend.cppå’Œserver.cppéƒ½ä½¿ç”¨)ï¼ŒæŠŠwxsendå’Œserveræ”¾åœ¨åŒä¸€ç›®å½•  
 
-¿â£º
+åº“ï¼š
 	tinyxml2: tinyxml2-2.1.0
 	openssl: openssl-1.0.1h
 	yaml-cpp : yaml-cpp 0.6.3-2
 
-## ÒÑÖª²»×ã
-Èç¹û°ÑwxsendĞ´³É³ÉÔ±º¯Êı£¬libcurl»ásegmentation fault£¬Ôİ²»ÖªÈçºÎ½â¾ö£¬ËùÒÔwxsendµ¥¶À±àÒë  
-Òò´Ë£¬Ò²¿ÉÒÔÔÚÃüÁîĞĞÖĞµ¥¶Àµ÷ÓÃ
+## å·²çŸ¥ä¸è¶³
+å¦‚æœæŠŠwxsendå†™æˆæˆå‘˜å‡½æ•°ï¼Œlibcurlä¼šsegmentation faultï¼Œæš‚ä¸çŸ¥å¦‚ä½•è§£å†³ï¼Œæ‰€ä»¥wxsendå•ç‹¬ç¼–è¯‘  
+å› æ­¤ï¼Œä¹Ÿå¯ä»¥åœ¨å‘½ä»¤è¡Œä¸­å•ç‹¬è°ƒç”¨
 ```	
 ./wxsend [type] [item] [UserID]
 ```
-Àı£º
+ä¾‹ï¼š
 ```	
 ./wxsend text example @all
 ./wxsend image example.jpg @all
 ./wxsend file example.cpp @all
 ```
-## ±àÒë·½·¨
+## ç¼–è¯‘æ–¹æ³•
 
 ### wxsend 
 ```
@@ -41,17 +41,26 @@ clang++ wxsend.cpp /usr/lib/libyaml-cpp.so.0.6 -lcurl -o wxsend
 ```
 ### Others (vs2019 or clang++)
 
-#### 1. vs2019
-Ìí¼ÓÆäËûÎÄ¼şµ½ÏîÄ¿£¬²»°üÀ¨wxsend.cpp  
-ÏîÄ¿ÊôĞÔ-Á´½ÓÆ÷-ÊäÈë-¸½¼ÓÒÀÀµÏî£º(Òª°üÀ¨Â·¾¶)  
+#### 1. vs2019ï¼ˆè¿æ¥Arch Linuxï¼‰
+æ·»åŠ å…¶ä»–æ–‡ä»¶åˆ°é¡¹ç›®ï¼Œä¸åŒ…æ‹¬wxsend.cpp  
+é¡¹ç›®å±æ€§-é“¾æ¥å™¨-è¾“å…¥-é™„åŠ ä¾èµ–é¡¹ï¼š(è¦åŒ…æ‹¬è·¯å¾„)  
 ```	
 libcrypto.a
 libtinyxml2.so.7
 libyaml-cpp.so.0.6
 libcurl.so
 ```
-#### 2. clang++£¨Arch Linux Ê¾Àı£©
+#### 2. clang++ï¼ˆArch Linux ç¤ºä¾‹ï¼‰
 ```
 clang++ server.cpp WXBizMsgCrypt.cpp /usr/lib/libtinyxml2.so.7 /usr/local/openssl/lib/libcrypto.a /usr/lib/libyaml-cpp.so.0.6 -o server
 
 ```
+## å‚è€ƒ
+[ä¼ä¸šå¾®ä¿¡API](https://work.weixin.qq.com/api/doc)
+[C++ å†™çš„UrlEncodeå’ŒUrlDecodeå®ä¾‹](https://www.jb51.net/article/201855.htm)
+[C++ç”¨libcurlé€šè¿‡HTTPä»¥è¡¨å•çš„æ–¹å¼Postæ•°æ®åˆ°æœåŠ¡å™¨](https://blog.csdn.net/shaoyiju/article/details/78238336)
+[c++ å¼€å‘ä¸­åˆ©ç”¨yaml-cppè¯»å†™yamlé…ç½®æ–‡ä»¶](https://blog.csdn.net/briblue/article/details/89515470)
+[yaml-cpp Easiest way to iterate through a map with undefined value](https://stackoverflow.com/questions/12374691/yaml-cpp-easiest-way-to-iterate-through-a-map-with-undefined-values)
+[ç”¨C++å†™ä¸€ä¸ªç®€å•çš„æœåŠ¡å™¨(Linux)](https://blog.csdn.net/qq_29695701/article/details/83830108)
+......
+
