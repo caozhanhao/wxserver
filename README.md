@@ -5,7 +5,7 @@
 
 运行时可以通过 微信/企业微信 向应用发送消息，程序收到消息会提示。
 如果收到config.yaml中定义的自动回复，会回复指定内容。
-如果收到config.yaml中定义的管理员发送的 pic/file ，会发送指定图片或文件。
+如果收到config.yaml中定义的管理员发送的 image/file ，会发送指定图片或文件。
 例(向企业微信应用发送):
 ```
 image /home/example_user/example.jpg
@@ -17,10 +17,11 @@ file /home/example_user/example.cpp
 使用时需要config.yaml(wxsend.cpp和server.cpp都使用)，把wxsend和server放在同一目录  
 
 库：
+```
 	tinyxml2: tinyxml2-2.1.0
 	openssl: openssl-1.0.1h
 	yaml-cpp : yaml-cpp 0.6.3-2
-
+```
 ## 已知不足
 如果把wxsend写成成员函数，libcurl会segmentation fault，暂不知如何解决，所以wxsend单独编译  
 因此，也可以在命令行中单独调用
