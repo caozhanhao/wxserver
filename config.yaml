@@ -1,0 +1,23 @@
+Port: input_Port
+Token: input_your_Token
+CorpID: input_your_CorpID
+CorpSecret: input_your_CorpSecret
+EncodingAESKey: input_your_EncodingAESKey
+access_token: input_your_access_token
+#第一次使用没有access_token,可以随便输入，程序运行时会给出提示并修改
+
+#tags是自动回复,左侧是待回复，右侧是回复内容
+tags:
+  test: I get it.
+  hello: hi
+  测试: 收到信息
+
+#这是管理员列表，只有在列表且值为true的用户才可使用pic和file
+#左侧UserID,右侧true/false
+admin:
+  XXXX : true
+
+#命令列表，只测试了两个
+command:
+  file: true
+  image: true
