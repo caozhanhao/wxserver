@@ -5,7 +5,7 @@
 
 运行时可以通过 微信/企业微信 向应用发送消息，程序收到消息会提示。
 如果收到config.yaml中定义的自动回复，会回复指定内容。
-如果收到config.yaml中定义的管理员发送的 pic/file ，会发送指定图片或文件。
+如果收到config.yaml中定义的管理员发送的 image/file ，会发送指定图片或文件。
 例(向企业微信应用发送):
 ```
 image /home/example_user/example.jpg
