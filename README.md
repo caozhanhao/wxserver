@@ -56,11 +56,11 @@ clang++ server.cpp WXBizMsgCrypt.cpp /usr/lib/libtinyxml2.so.7 /usr/local/openss
 
 ```
 ## 参考
-[企业微信API](https://work.weixin.qq.com/api/doc)
-[C++ 写的UrlEncode和UrlDecode实例](https://www.jb51.net/article/201855.htm)
-[C++用libcurl通过HTTP以表单的方式Post数据到服务器](https://blog.csdn.net/shaoyiju/article/details/78238336)
-[c++ 开发中利用yaml-cpp读写yaml配置文件](https://blog.csdn.net/briblue/article/details/89515470)
-[yaml-cpp Easiest way to iterate through a map with undefined value](https://stackoverflow.com/questions/12374691/yaml-cpp-easiest-way-to-iterate-through-a-map-with-undefined-values)
-[用C++写一个简单的服务器(Linux)](https://blog.csdn.net/qq_29695701/article/details/83830108)
-......
+[企业微信API](https://work.weixin.qq.com/api/doc)  
+[C++ 写的UrlEncode和UrlDecode实例](https://www.jb51.net/article/201855.htm)  
+[C++用libcurl通过HTTP以表单的方式Post数据到服务器](https://blog.csdn.net/shaoyiju/article/details/78238336)  
+[c++ 开发中利用yaml-cpp读写yaml配置文件](https://blog.csdn.net/briblue/article/details/89515470)  
+[yaml-cpp Easiest way to iterate through a map with undefined value](https://stackoverflow.com/questions/12374691/yaml-cpp-easiest-way-to-iterate-through-a-map-with-undefined-values)  
+[用C++写一个简单的服务器(Linux)](https://blog.csdn.net/qq_29695701/article/details/83830108)  
+
 
