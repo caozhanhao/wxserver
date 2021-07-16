@@ -8,23 +8,22 @@
 ```
 file /home/example_user/example.cpp
 ```
-相应的命令可以在在config.czh的command中启用("true")或关闭("false")，目前只有file
+相应的命令可以在在config.czh的command中启用("true")或关闭("false")，目前仅有file
 
 ## 依赖
-使用时需要config.yaml(wxsend.cpp和server.cpp都使用)，把wxsend和server放在同一目录  
-
-库：
 ```
 openssl 
 czh
+curl
 ```
 
 ## 编译方法
 
 ```
-gcc main.cpp -lcrypto -lcurl -g -lstdc++
+gcc main.cpp -lcrypto -lcurl -lstdc++
 
 ```
+
 ## 参考
 [企业微信API](https://work.weixin.qq.com/api/doc)  
 [C++ 写的UrlEncode和UrlDecode实例](https://www.jb51.net/article/201855.htm)  
