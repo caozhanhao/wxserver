@@ -1,0 +1,19 @@
+config:
+Port = input port;
+Token = "input Token";
+EncodingAESKey = "input EncodingAESKey";
+CorpID = "input CorpID";
+CorpSecret = "input CorpSecret";
+end;
+
+tags:
+test = "yes";
+end;
+
+command:
+file = "true";
+end;
+
+admin:
+xxx = "true";
+end;
