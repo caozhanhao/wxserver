@@ -3,24 +3,18 @@
 ## 功能
 运行时可以通过 微信/企业微信 向应用发送消息，程序收到消息会提示。
 如果收到config.czh中定义的自动回复，会回复指定内容。
-如果收到config.czh中定义的管理员发送的 file ，会发送文件。
-例(向企业微信应用发送):
-```
-file /home/example_user/example.cpp
-```
-相应的命令可以在在config.czh的command中启用("true")或关闭("false")，目前仅有file
 
 ## 依赖
 ```
 openssl 
-czh
 curl
+czh-cpp
 ```
 
 ## 编译方法
 
 ```
-gcc main.cpp -lcrypto -lcurl -lstdc++
+gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread
 
 ```
 
