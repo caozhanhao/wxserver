@@ -4,10 +4,12 @@
 #include "wxmsg.h"
 #include "wxurl.h"
 #include "wxxml.h"
-#include "wxhttp.h"
+#include "wxthpool.h"
+#include "wxcmd.h"
 #include "czh-cpp/czh.h"
 
 #include <ctime>
+#include <cstdio>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -24,12 +26,9 @@ namespace ws
   private:
     int port;
     WXmsg wxmsg;
+    WXcmd wxcmd;
     std::map<std::string, std::string> tags;
     std::map<std::string, std::string> admin;
-    std::map<std::string, std::string> command;
-    std::string access_token;
-    std::string corpid;
-    std::string corpsecret;
   public:
     WXserver(const std::string& path)
     {
@@ -37,16 +36,16 @@ namespace ws
 
       std::string token = config.in("config")["Token"].get_value<std::string>();
       std::string encoding_aes_key = config.in("config")["EncodingAESKey"].get_value<std::string>();
-
-      corpid = config.in("config")["CorpID"].get_value<std::string>();
-      corpsecret = config.in("config")["CorpSecret"].get_value<std::string>();
+      std::string corpid = config.in("config")["CorpID"].get_value<std::string>();
+      std::string corpsecret = config.in("config")["CorpSecret"].get_value<std::string>();
+      
       port = config.in("config")["Port"].get_value<int>();
 
       wxmsg = WXmsg(token, encoding_aes_key, corpid);
+      wxcmd = WXcmd(corpid, corpsecret);
 
       tags = config.in("tags").value_map<std::string>();
       admin = config.in("admin").value_map<std::string>();
-      command = config.in("command").value_map<std::string>();
     }
     void run()
     {
@@ -82,130 +81,17 @@ namespace ws
           "\r\n";
         send(clientSock, response.c_str(), response.length(), 0);
 
-        // std::cout << "requestStr: \n" << requestStr << "\n";
-        url_router(clientSock, requestStr);
-
-        time_t now = time(0);
-        char* dt = ctime(&now);
-        std::cout << "time: " << dt;
-
-        std::cout << "---------------completed---------------\n";
-        close(clientSock);//关闭客户端套接字
+        WXthpool thpool(16);
+        std::function<void(ws::WXserver*, const int,const std::string&)> func =
+          [](ws::WXserver* pwxs, const int clientSock, const std::string& requestStr)
+          {pwxs->url_router(clientSock, requestStr);};
+        thpool.add_task(func, this, clientSock, requestStr);
       }
       close(sock);//关闭服务器套接字
     }
-    void wxsend(std::string type, const std::string& msg, const std::string& id)
+    void url_router(const int clientSock, const std::string& requestStr)
     {
-      if (type == "text")
-      {
-        std::string postdata = R""({
-           "touser" : ")"" + id + R""(",
-            "msgtype" : "text",
-            "agentid" : 1000002,                                                                                                                                                              
-            "text" : {
-                "content" : ")"" + msg + R""("
-                     },   
-            "safe":0,
-            "enable_id_trans": 0,
-            "enable_duplicate_check": 0,
-            "duplicate_check_interval": 1800
-            })"";
-        wxpost(postdata);
-      }
-      else if (type == "file")
-      {
-        std::string postdata = R""({
-           "touser" : ")"" + id + R""(",
-            "msgtype" : ")"" + type + R""(",
-            "agentid" : 1000002,                                                                                                                                                              
-            ")"" + type + R""(" : {
-                "media_id" : ")"" + get_media_id(msg) + R""("
-                     },   
-            "safe":0,
-            "enable_id_trans": 0,
-            "enable_duplicate_check": 0,
-            "duplicate_check_interval": 1800
-            })"";
-        wxpost(postdata);
-      }
-      else
-        throw WXerr(WS_ERROR_LOCATION, __func__, "error type '" + type + "'.");
-    }
-  private:
-    std::string wxpost(const std::string& postdata)
-    {
-      std::string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token;
-      WXhttp h(url);
-      std::string res = h.POST(postdata, "");
-      int k = res.find(",");
-      std::string i = res.substr(0, k);
-      if (i == "{\"errcode\":0") return res;
-      else if (i == "{\"errcode\":41001" || i == "{\"errcode\":42001" || i == "{\"errcode\":40014")
-      {
-        get_access_token();
-        wxpost(postdata);
-      }
-      else
-        throw WXerr(WS_ERROR_LOCATION, __func__, "res: " + res + "\npostdata: " + postdata + "\n");
-      return "";
-    }
-
-    std::string get_media_id(const std::string& path)
-    {
-      std::string url = "https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token=" + access_token + "&type=file";
-      WXhttp h(url);
-      std::string res = h.POST("", path);
-      int k = res.find(",");
-      std::string s = res.substr(0, k);
-      if (s == "{\"errcode\":0")
-      {
-        int a = res.find("media_id");
-        std::string media_id = res.substr(a + 11);
-        int b = media_id.find("\",\"created_at");
-        media_id = media_id.substr(0, b);
-        return media_id;
-      }
-      else
-      {
-        throw WXerr(WS_ERROR_LOCATION, __func__, "res: " + res + "\npath: " + path + "\n");
-      }
-    }
-    void get_access_token()
-      //获取access_token：https://open.work.weixin.qq.com/api/doc/90000/90135/91039
-    {
-      std::string url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + corpid + "&corpsecret=" + corpsecret;
-      WXhttp h(url);
-      std::string res = h.GET();
-      int k = res.find("access_token");
-      std::string temp = res.substr(k + 15);
-      int j = temp.find("\",\"expires_in\"");
-      temp = temp.substr(0, j);
-      access_token = temp;
-    }
-    inline bool check_user(const std::string& id)
-    {
-      if (admin.find(id) == admin.end())
-        return false;
-      else
-      {
-        if (admin[id] == "true")
-          return true;
-        else
-          return false;
-      }
-    }
-    void wxcmd(const std::string& command, const std::string& id)
-    {
-      int i = int(command.find(" "));
-      std::string cmd = command.substr(0, i);
-      if (cmd == "/file")
-      {
-        std::string path = command.substr(i + 1);
-        wxsend("file", path, id);
-      }
-    }
-    void url_router(int clientSock, std::string& requestStr)
-    {
+      std::string out = "";
       std::string firstLine = requestStr.substr(0, requestStr.find("\r\n"));
       firstLine = firstLine.substr(firstLine.find(" ") + 1);
       std::string url = firstLine.substr(0, firstLine.find(" "));
@@ -222,14 +108,14 @@ namespace ws
         std::string req_echostr = req_url.parse("echostr");
         std::string echostr = wxmsg.verify_url(msg_sig, timestamp, nonce, req_echostr);
         send(clientSock, echostr.c_str(), echostr.length(), 0);
-        std::cout << "verify url success\n";
+        out += "verify url success\n";
       }
       if (req_type == "POST")//POST是收到回复，详情见api文档
       {
         auto a = requestStr.find("<xml>");
         auto b = requestStr.find("</xml>");
-        requestStr = requestStr.substr(a, b + 6);
-        WXxml req_xml(requestStr);
+        std::string temp = requestStr.substr(a, b + 6);
+        WXxml req_xml(temp);
 
         std::string msg_sig = req_url.parse("msg_signature");
         std::string timestamp = req_url.parse("timestamp");
@@ -242,29 +128,50 @@ namespace ws
         WXxml plain_xml(req_msg);
 
         std::string content = cut(plain_xml.parse("Content"));
-        std::cout << "content: " << content << "\n";
+        out += "content: " + content + "\n";
 
         std::string UserID = cut(plain_xml.parse("FromUserName"));
-        std::cout << "UserID: " << UserID << "\n";
+        out += "UserID: " + UserID + "\n";
 
         if (tags.find(content) != tags.end())
         {
-          wxsend("text", tags[content], UserID);
-          std::cout << "res: " << tags[content] << "\n";
+          wxcmd.send("text", tags[content], UserID);
+          out += "res: " + tags[content] += "\n";
         }
         else if (content[0] == '/')
         {
           if (check_user(UserID))
-            wxcmd(content, UserID);
+            wxcmd.command(content, UserID);
           else
           {
-            wxsend("text", "Permission denied", UserID);
-            std::cout << "res: Permission denied" << "\n";
-            return;
+            wxcmd.send("text", "Permission denied", UserID);
+            out += "res: Permission denied\n";
           }
         }
+      }
+      time_t now = time(0);
+      char* dt = ctime(&now);
+      out += "time: ";
+      out += dt;
+      out += "---------------completed---------------\n";
+      std::cout << out;
+      close(clientSock);
+    }
+    void add_cmd(const std::string& tag, const WXcmd_func& func)
+    {
+      wxcmd.add_cmd(tag, func);
+    }
+  private:
+   inline bool check_user(const std::string& id)
+    {
+      if (admin.find(id) == admin.end())
+        return false;
+      else
+      {
+        if (admin[id] == "true")
+          return true;
         else
-          return;
+          return false;
       }
     }
   };
