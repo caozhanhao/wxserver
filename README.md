@@ -1,8 +1,16 @@
 # 企业微信回复消息服务器
 
 ## 功能
-运行时可以通过 微信/企业微信 向应用发送消息，程序收到消息会提示。
-如果收到config.czh中定义的自动回复，会回复指定内容。
+- 收到config.czh中定义的自动回复，会回复指定内容。
+- 收到以`/`开头的会被识别为命令。
+
+## 命令
+- 使用命令必须以`/`开头
+- 在main.cpp中可以添加命令
+- 使用`add_cmd(const std::string& tag, const WXcmd_func& func)`添加命令,第一个参数是命令(不含`/`)，第二个参数是回调函数,它的返回值类型是WXcmd_ret
+- WXcmd_func 即为 std::function<WXcmd_ret(const std::string&)>
+- WXcmd_ret 即为 std::pair<const std::string, const std::string>，第一个string表发送类型(目前仅支持file,text)，第二个表内容。当发送类型为file时，内容为该文件路径
+- 当服务器收到命令时，会向回调函数传递参数。`/`后的第一个空格分离命令和其参数,例`/file abc.txt`，命令为`file`,参数为`abc.txt`
 
 ## 依赖
 ```
@@ -11,11 +19,11 @@ curl
 czh-cpp
 ```
 
-## 编译方法
+## 使用方法
 
 ```
-gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread
-
+gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread -o wxserver
+./wxserver -c config.czh
 ```
 
 ## 参考
