@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <future>
 #include <memory>
+#include <exception>
 namespace ws
 {
   class WXthpool
@@ -21,6 +22,8 @@ namespace ws
     std::queue<Task> tasks;
     std::atomic<bool> run;
     std::mutex th_mutex;
+    std::mutex err_mutex;
+    std::exception_ptr err_ptr;
     std::condition_variable cond;
   public:
     WXthpool(std::size_t size): run(true) { add_thread(size); }

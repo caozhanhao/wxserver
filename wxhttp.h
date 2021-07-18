@@ -14,6 +14,10 @@ namespace ws
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
   }
+  
+  const bool WXhttp_is_postdata = true;
+  const bool WXhttp_is_path = false;
+
   class WXhttp
   {
   private:
@@ -21,10 +25,11 @@ namespace ws
 
   public:
     WXhttp(const std::string& _url) :url(_url) {  }
-    std::string POST(const std::string& postdata, const std::string& path)
+    std::string POST(const std::string& str, bool postdata_or_path)//true postdata
     {
-      if (postdata == "" && path == "")
-        throw WXerr(WS_ERROR_LOCATION, __func__, "postdata and path are empty");
+      if (str == "")
+        throw WXerr(WS_ERROR_LOCATION, __func__, std::string(postdata_or_path ? "postdata" : "path") + "is empty");
+
       CURL* curl = NULL;
       std::string readBuffer;
       curl = curl_easy_init();
@@ -33,21 +38,22 @@ namespace ws
       // 设置URL
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
       // 设置参数
-      if (postdata != "")
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postdata.c_str());
+      if (postdata_or_path)
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str.c_str());
       // 设置为Post
       curl_easy_setopt(curl, CURLOPT_POST, 1);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         
       struct curl_slist* headerlist = NULL;
-        struct curl_httppost* curlFormPost = 0;
-        struct curl_httppost* curlLastPtrFormPost = 0;
-      if (path != "")
+      struct curl_httppost* curlFormPost = 0;
+      struct curl_httppost* curlLastPtrFormPost = 0;
+
+      if (!postdata_or_path)
       {
         curl_formadd(&curlFormPost, &curlLastPtrFormPost,
           CURLFORM_COPYNAME, "image",
-          CURLFORM_FILE, path.c_str(), CURLFORM_END);
+          CURLFORM_FILE, str.c_str(), CURLFORM_END);
 
         curl_easy_setopt(curl, CURLOPT_HTTPPOST, curlFormPost);
 
@@ -55,17 +61,19 @@ namespace ws
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
 
       }
+
       CURLcode res = curl_easy_perform(curl);
-      if (res != CURLE_OK)
-      {
-        throw WXerr(WS_ERROR_LOCATION, __func__, "CURLcode is not CURLE_OK.");
-      }
-      // 清空
       curl_easy_cleanup(curl);
-      if (path != "")
+
+      if (!postdata_or_path)
       {
         curl_formfree(curlFormPost);
         curl_slist_free_all(headerlist);
+      }
+      
+      if (res != CURLE_OK)
+      {
+        throw WXerr(WS_ERROR_LOCATION, __func__, "CURLcode is not CURLE_OK");
       }
       return readBuffer;
     }

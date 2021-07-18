@@ -7,47 +7,50 @@
 
 int main(int argc, char **argv)
 { 
-  while(true)
+  std::string path;
+  for (int i = 1; i < argc; i++)
   {
-    try
+    if(std::string("-c") == argv[i])
     {
-      std::string path;
-      for (int i = 1; i < argc; i++)
+      if(i + 1 < argc && argv[i + 1][0] != '-')
       {
-        if(std::string("-c") == argv[i])
-        {
-          if(i + 1 < argc && argv[i + 1][0] != '-')
-          {
-            path = argv[i + 1];
-            i++;
-            continue;
-          }
-        }
-        else 
-          throw ws::WXerr(WS_ERROR_LOCATION, __func__, "invalid argument('" + std::string(argv[i])  + "')", ws::cant_continue);
+        path = argv[i + 1];
+        i++;
+        continue;
       }
-      if(path == "")
-      throw ws::WXerr(WS_ERROR_LOCATION, __func__, "Please use '-c' to define config file", ws::cant_continue);
-
-      ws::WXserver server(path);
-/*
- *
- * 添加命令
- *
- */
-    server.add_cmd("file",
-    [](const std::string& args) -> ws::WXcmd_ret
-    { return {"file", args}; });    
-
-/**/ 
-    server.run();
     }
-    catch (ws::WXerr& err)
+    else 
     {
-      std::cout << err.func_name << "() at '" << err.location << "':\n" 
-        << err.details << std::endl;
-      if(!err.can_continue) return -1;
+      std::cout << "invalid argument('" + std::string(argv[i])  + "')";
+      return -1;
     }
   }
+  if(path == "")
+  {
+    std::cout << "Please use '-c' to define config file";
+    return -1;
+  }
+  
+  ws::WXserver server(path);
+
+// 添加命令
+  server.add_cmd("file",
+  [](const std::string& args) -> ws::WXcmd_ret
+  { return {"file", args}; });    
+  
+  server.add_cmd("time", 
+  [](const std::string& args) -> ws::WXcmd_ret
+  {
+    std::string res = "";
+    if(args != "")
+      res += "invalid argument('" + args + "')" + "\n";
+    time_t now = time(0);
+    res += ctime(&now);
+    return {"text", res};
+  });
+
+  // 
+ 
+  server.run();
   return 0;
 }

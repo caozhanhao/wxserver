@@ -8,7 +8,7 @@
 #define WS_ERROR_LOCATION  __FILE__ ":" WS_STRINGFY(__LINE__) 
 namespace ws
 {
-  const bool cant_continue = false;
+  const bool WXerr_cant_continue = false;
   class WXerr: public std::logic_error
   {
   public:

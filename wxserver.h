@@ -8,6 +8,7 @@
 #include "wxcmd.h"
 #include "czh-cpp/czh.h"
 
+
 #include <ctime>
 #include <cstdio>
 #include <unistd.h>
@@ -63,7 +64,24 @@ namespace ws
       int clientAddrSize = sizeof(clientAddr);
       int clientSock;
       //接受客户端请求
+      WXthpool thpool(16);
+      std::function<void(const int,const std::string&)> func =
+        [this](const int clientSock, const std::string& requestStr)
+        {
+          try
+          {
+            this->url_router(clientSock, requestStr);
+          }
+          catch (WXerr &err)
+          {
+            std::string out = "---\nError:" + err.func_name + "() at '" + err.location + "':\n" 
+                              + err.details + "\n---\n";
+            std::cout << out;
+            if(!err.can_continue) exit(-1);
+          }
+        };
       std::cout << "Server started successfully\n";
+      
       while (-1 != (clientSock = accept(sock, (sockaddr*)&clientAddr, (socklen_t*)&clientAddrSize)))
       {
         // 收请求
@@ -81,11 +99,7 @@ namespace ws
           "\r\n";
         send(clientSock, response.c_str(), response.length(), 0);
 
-        WXthpool thpool(16);
-        std::function<void(ws::WXserver*, const int,const std::string&)> func =
-          [](ws::WXserver* pwxs, const int clientSock, const std::string& requestStr)
-          {pwxs->url_router(clientSock, requestStr);};
-        thpool.add_task(func, this, clientSock, requestStr);
+        thpool.add_task(func, clientSock, requestStr);
       }
       close(sock);//关闭服务器套接字
     }
@@ -141,7 +155,7 @@ namespace ws
         else if (content[0] == '/')
         {
           if (check_user(UserID))
-            wxcmd.command(content, UserID);
+            out += "res: " + wxcmd.command(content, UserID) + "\n";
           else
           {
             wxcmd.send("text", "Permission denied", UserID);
@@ -173,6 +187,6 @@ namespace ws
         else
           return false;
       }
-    }
+    } 
   };
 }

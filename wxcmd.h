@@ -27,22 +27,38 @@ namespace ws
     {
       commands[tag] = func;
     }
-    void command(const std::string& stmt, const std::string& UserID)
+    std::string command(const std::string& stmt, const std::string& UserID)
     {
       auto i = stmt.find(" ");
-      std::string cmd = stmt.substr(1, i - 1);
-      std::string args = stmt.substr(i + 1);
+      std::string cmd = "";
+      std::string args = "";
+      if (i == std::string::npos)
+      {
+        cmd = stmt.substr(1);
+      }
+      else
+      {
+        cmd = stmt.substr(1, i - 1);
+        args = stmt.substr(i + 1);       
+      }
 
-      if(commands.find(cmd) == commands.end()) return;
-      auto ret = commands[cmd](args);
+      if(commands.find(cmd) == commands.end())
+      {
+        std::string temp = "command('" + cmd + "') not found";
+        send("text", temp, UserID);
+        return temp;
+      }
+      WXcmd_ret ret = commands[cmd](args);
       send(ret.first, ret.second, UserID);
+      return ret.second + "(" + ret.first + ")";
     }
 
     void send(const std::string& type, const std::string& msg, const std::string& id)
     {
+      std::string postdata = "";
       if (type == "text")
       {
-        std::string postdata = R""({
+        postdata = R""({
            "touser" : ")"" + id + R""(",
             "msgtype" : "text",
             "agentid" : 1000002,                                                                                                                                                              
@@ -54,11 +70,10 @@ namespace ws
             "enable_duplicate_check": 0,
             "duplicate_check_interval": 1800
             })"";
-        wxpost(postdata);
       }
       else if (type == "file")
       {
-        std::string postdata = R""({
+        postdata = R""({
            "touser" : ")"" + id + R""(",
             "msgtype" : ")"" + type + R""(",
             "agentid" : 1000002,                                                                                                                                                              
@@ -70,10 +85,10 @@ namespace ws
             "enable_duplicate_check": 0,
             "duplicate_check_interval": 1800
             })"";
-        wxpost(postdata);
       }
       else
         throw WXerr(WS_ERROR_LOCATION, __func__, "error type '" + type + "'.");
+      wxpost(postdata);
     }
 
   private:
@@ -81,7 +96,7 @@ namespace ws
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token;
       WXhttp h(url);
-      std::string res = h.POST(postdata, "");
+      std::string res = h.POST(postdata, WXhttp_is_postdata);
       int k = res.find(",");
       std::string i = res.substr(0, k);
       if (i == "{\"errcode\":0") return res;
@@ -99,7 +114,7 @@ namespace ws
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token=" + access_token + "&type=file";
       WXhttp h(url);
-      std::string res = h.POST("", path);
+      std::string res = h.POST(path, WXhttp_is_path);
       int k = res.find(",");
       std::string s = res.substr(0, k);
       if (s == "{\"errcode\":0")
