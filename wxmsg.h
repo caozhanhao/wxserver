@@ -14,7 +14,7 @@
 #include <string>
 #include <cstring>
 #include <map>
-namespace ws
+namespace ws::msg
 {
   std::string wx_decode_base64(const std::string& str_encrypt)
   {
@@ -31,14 +31,14 @@ namespace ws
     int osize = int(str_encrypt.size());
     char *out = (char*)malloc(osize);
     if(out == NULL)
-      throw WXerr(WS_ERROR_LOCATION, __func__, "malloc error"); 
+      throw error::Error(WS_ERROR_LOCATION, __func__, "malloc error");
 
     int rsize = 0;
     rsize =  EVP_DecodeBlock((unsigned char*)out, (const unsigned char*)str_encrypt.c_str(), int(str_encrypt.size()));
     if(rsize > eq && rsize < osize)
       ret.assign(out, rsize - eq);
     else
-      throw WXerr(WS_ERROR_LOCATION, __func__, "EVP_DecodeBlock() error"); 
+      throw error::Error(WS_ERROR_LOCATION, __func__, "EVP_DecodeBlock() error");
       
     free(out);
     out = nullptr;
@@ -50,7 +50,7 @@ namespace ws
     unsigned char out[SHA_DIGEST_LENGTH] = { 0 };
     if (SHA1((const unsigned char*)str.c_str(), str.size(), out) == NULL)
     {
-      throw WXerr(WS_ERROR_LOCATION, __func__, "sha1 error");
+      throw error::Error(WS_ERROR_LOCATION, __func__, "sha1 error");
     }
 
     std::string ret;
@@ -69,7 +69,7 @@ namespace ws
 
     unsigned char * out = (unsigned char*)malloc(str_encrypt.size());
     if(out == NULL)
-      throw WXerr(WS_ERROR_LOCATION, __func__, "malloc error"); 
+      throw error::Error(WS_ERROR_LOCATION, __func__, "malloc error");
 
     unsigned char ckey[32] = {0};
     unsigned char iv[16] = {0} ;
@@ -82,7 +82,7 @@ namespace ws
     if (out[str_encrypt.size() - 1] > 0 && out[str_encrypt.size() - 1] <= 32 && (str_encrypt.size() - out[str_encrypt.size() - 1]) > 0 )
       result.append((char*)out, str_encrypt.size() - out[str_encrypt.size() - 1]);
     else 
-      throw WXerr(WS_ERROR_LOCATION, __func__, "error"); 
+      throw error::Error(WS_ERROR_LOCATION, __func__, "error");
 
     free(out);
     out = nullptr;
@@ -105,7 +105,7 @@ namespace ws
   }
 
 
-  class WXmsg
+  class Msg
   {
   private:
     std::string token;
@@ -113,10 +113,10 @@ namespace ws
     std::string corpid;
 
   public:
-    WXmsg() : token(""), encoding_aes_key(""), corpid("") {  }
-    WXmsg(const std::string& _token,
-      const std::string& _encoding_aes_key,
-      const std::string& _corpid)
+    Msg() : token(""), encoding_aes_key(""), corpid("") {  }
+    Msg(const std::string& _token,
+        const std::string& _encoding_aes_key,
+        const std::string& _corpid)
       :token(_token), encoding_aes_key(_encoding_aes_key), corpid(_corpid) { }
 
     int verify_sign(const std::string& msg_sign, const std::string& time_stamp,
@@ -132,14 +132,14 @@ namespace ws
       const std::string& nonce, const std::string& echo_str)
     {
       if (verify_sign(msg_sign, time_stamp, nonce, echo_str) != 0)
-        throw WXerr(WS_ERROR_LOCATION, __func__, "verify sign failed.");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "verify sign failed.");
       return decrypt(echo_str);
     }
     std::string decrypt_msg(const std::string& msg_sign, const std::string& time_stamp,
       const std::string& nonce, const std::string& msg_encrypt)
     {
       if (verify_sign(msg_sign, time_stamp, nonce, msg_encrypt) != 0)
-        throw WXerr(WS_ERROR_LOCATION, __func__, "verify sign failed.");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "verify sign failed.");
       return decrypt(msg_encrypt);
     }
 
@@ -156,7 +156,7 @@ namespace ws
       std::string receiveid = msg_decrypt.substr(16 + 4 + msg_len);
       if (corpid != receiveid)
       {
-        throw WXerr(WS_ERROR_LOCATION, __func__, "receiveid('" + receiveid + "') != corpid('" + corpid + "')");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "receiveid('" + receiveid + "') != corpid('" + corpid + "')");
       }
       return ret;
     }

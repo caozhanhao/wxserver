@@ -6,11 +6,12 @@
 - 只有管理员可使用命令
 
 ## 使用方法
+- 需要一个企业微信
 ### config.czh
-- CorpID  我的企业/企业信息/企业ID
-- CorpSecret  应用管理/xxx/Secret
-- Token和EncodingAESKey 应用管理/xxx/功能/设置API接收/
-- xxx为你的应用名称，没有就创建一个
+- CorpID                  我的企业/企业信息/企业ID
+- CorpSecret              应用管理/xxx/Secret
+- Token和EncodingAESKey   应用管理/xxx/功能/设置API接收/
+- 以上xxx代表应用名称，没有就创建一个
 - tags为自动回复
 - admin为管理员，使用"true"启用
 ### 依赖
@@ -25,10 +26,10 @@ gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread -o wxserver
 ```
 
 ## 添加命令
-- 使用`add_cmd(const std::string& tag, const WXcmd_func& func)`添加命令,第一个参数是命令(不含`/`)，第二个参数是回调函数
+- 使用`add_cmd(const std::string& tag, const Cmd_func& func)`添加命令,第一个参数是命令(不含`/`)，第二个参数是回调函数
 - 回调函数接收一个const std::string&, 返回WXcmd_ret
-- WXcmd_func 即为 std::function<WXcmd_ret(const std::string&)>
-- WXcmd_ret 即为 std::pair<const std::string, const std::string>，第一个string表发送类型(目前仅支持file,text)，第二个表内容。当发送类型为file时，内容为该文件路径
+- Cmd_func 即为 std::function<Cmd_ret(const std::string&)>
+- Cmd_ret 即为 std::pair<const std::string, const std::string>，第一个string表发送类型(目前仅支持file,text)，第二个表内容。当发送类型为file时，内容为该文件路径
 - 当服务器收到命令时，会向回调函数传递参数。`/`后的第一个空格分离命令和其参数,例`/file abc.txt`，命令为`file`,参数为`abc.txt`
 
 ## 注意事项

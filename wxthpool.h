@@ -12,9 +12,9 @@
 #include <future>
 #include <memory>
 #include <exception>
-namespace ws
+namespace ws::thpool
 {
-  class WXthpool
+  class Thpool
   {
   private:
     using Task = std::function<void()>;
@@ -26,8 +26,8 @@ namespace ws
     std::exception_ptr err_ptr;
     std::condition_variable cond;
   public:
-    WXthpool(std::size_t size): run(true) { add_thread(size); }
-    ~WXthpool()
+    Thpool(std::size_t size): run(true) { add_thread(size); }
+    ~Thpool()
     {
       run = false;
       cond.notify_all();
@@ -64,11 +64,11 @@ namespace ws
     }
   };
     template <typename Func, typename... Args>
-    auto WXthpool::add_task(Func&& f, Args&&... args) 
+    auto Thpool::add_task(Func&& f, Args&&... args)
     -> std::future<typename std::result_of<Func(Args...)>::type>
     {
       if(!run)
-        throw WXerr(WS_ERROR_LOCATION, __func__, "add task on stopped WXthpool");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "add task on stopped Thpool");
       using ret_type = typename std::result_of<Func(Args...)>::type;
       auto task = std::make_shared<std::packaged_task<ret_type()>>
         (std::bind(std::forward<Func>(f), std::forward<Args>(args)...));
@@ -80,5 +80,4 @@ namespace ws
       cond.notify_one();
       return ret;
     }
-
 }

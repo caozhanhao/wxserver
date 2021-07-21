@@ -5,9 +5,9 @@
 #include <curl/curl.h>
 #include <iostream>
 #include <string>
-//libcurl£ºhttps://curl.se/libcurl/c/libcurl-tutorial.html
-//C++°Ñlibcurl»ñÈ¡µ½µÄCURLcode×ªÎªstd::string£ºhttps://blog.csdn.net/qq_42311391/article/details/105159480
-namespace ws
+//libcurlï¿½ï¿½https://curl.se/libcurl/c/libcurl-tutorial.html
+//C++ï¿½ï¿½libcurlï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½CURLcode×ªÎªstd::stringï¿½ï¿½https://blog.csdn.net/qq_42311391/article/details/105159480
+namespace ws::http
 {
   size_t WriteCallback(char* contents, size_t size, size_t nmemb, void* userp)
   {
@@ -15,32 +15,33 @@ namespace ws
     return size * nmemb;
   }
   
-  const bool WXhttp_is_postdata = true;
-  const bool WXhttp_is_path = false;
 
-  class WXhttp
+  class Http
   {
+  public:
+    static const bool is_postdata = true;
+    static const bool is_path = false;
   private:
     std::string url;
 
   public:
-    WXhttp(const std::string& _url) :url(_url) {  }
+    Http(const std::string& _url) : url(_url) {  }
     std::string POST(const std::string& str, bool postdata_or_path)//true postdata
     {
       if (str == "")
-        throw WXerr(WS_ERROR_LOCATION, __func__, std::string(postdata_or_path ? "postdata" : "path") + "is empty");
+        throw error::Error(WS_ERROR_LOCATION, __func__, std::string(postdata_or_path ? "postdata" : "path") + "is empty");
 
       CURL* curl = NULL;
       std::string readBuffer;
       curl = curl_easy_init();
       if (curl == NULL)
-        throw WXerr(WS_ERROR_LOCATION, __func__, "curl_easy_init failed");
-      // ÉèÖÃURL
+        throw error::Error(WS_ERROR_LOCATION, __func__, "curl_easy_init() failed");
+      // ï¿½ï¿½ï¿½ï¿½URL
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-      // ÉèÖÃ²ÎÊý
+      // ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½
       if (postdata_or_path)
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str.c_str());
-      // ÉèÖÃÎªPost
+      // ï¿½ï¿½ï¿½ï¿½ÎªPost
       curl_easy_setopt(curl, CURLOPT_POST, 1);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -73,7 +74,7 @@ namespace ws
       
       if (res != CURLE_OK)
       {
-        throw WXerr(WS_ERROR_LOCATION, __func__, "CURLcode is not CURLE_OK");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "CURLcode is not CURLE_OK");
       }
       return readBuffer;
     }

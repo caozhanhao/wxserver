@@ -1,15 +1,16 @@
 config:
-Port = input port;
-Token = "input Token";
-EncodingAESKey = "input EncodingAESKey";
-CorpID = "input CorpID";
-CorpSecret = "input CorpSecret";
+    Port = 8345;
+    Token = "";
+    EncodingAESKey = "";
+    CorpID = "";
+    CorpSecret = "";
 end;
 
 tags:
-test = "yes";
+    test = "yes";
+    ok = "ok"
 end;
 
 admin:
-xxx = "true";
+    caozhanhao = true;
 end;

@@ -1,45 +1,29 @@
 #include "wxerr.h"
 #include "wxserver.h"
 #include "wxcmd.h"
+#include "wxoption.h"
 
 #include <iostream>
 #include <string>
 
 int main(int argc, char **argv)
-{ 
+{
+  ws::server::Server server;
   std::string path;
-  for (int i = 1; i < argc; i++)
-  {
-    if(std::string("-c") == argv[i])
-    {
-      if(i + 1 < argc && argv[i + 1][0] != '-')
-      {
-        path = argv[i + 1];
-        i++;
-        continue;
-      }
-    }
-    else 
-    {
-      std::cout << "invalid argument('" + std::string(argv[i])  + "')";
-      return -1;
-    }
-  }
-  if(path == "")
-  {
-    std::cout << "Please use '-c' to define config file";
-    return -1;
-  }
+  ws::option::Option option(argc, argv);
+  option.add("c", "config",
+             [&server](ws::option::Option::CallbackArgType args)
+             {
+                server.init(args[0]);
+             }, 10);
+  option.parse().run();
   
-  ws::WXserver server(path);
-
-// 添加命令
   server.add_cmd("file",
-  [](const std::string& args) -> ws::WXcmd_ret
+  [](const std::string& args) -> ws::cmd::Cmd_ret
   { return {"file", args}; });    
   
   server.add_cmd("time", 
-  [](const std::string& args) -> ws::WXcmd_ret
+  [](const std::string& args) -> ws::cmd::Cmd_ret
   {
     std::string res = "";
     if(args != "")
@@ -48,9 +32,7 @@ int main(int argc, char **argv)
     res += ctime(&now);
     return {"text", res};
   });
-
-  // 
- 
+  
   server.run();
   return 0;
 }

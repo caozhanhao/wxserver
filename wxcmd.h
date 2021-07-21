@@ -7,31 +7,31 @@
 #include <functional>
 #include <map>
 
-namespace ws
+namespace ws::cmd
 {
-  using WXcmd_ret = std::pair<const std::string, const std::string>;
-  using WXcmd_func = std::function<WXcmd_ret(const std::string&)>;
-  class WXcmd
+  using Cmd_ret = std::pair<const std::string, const std::string>;
+  using Cmd_func = std::function<Cmd_ret(const std::string&)>;
+  class Cmd
   {
   private: 
     std::string access_token; 
     std::string corpid;
     std::string corpsecret;
-    std::map<std::string, WXcmd_func> commands;
+    std::map<std::string, Cmd_func> commands;
   public:
-    WXcmd(): access_token(""), corpid(""), corpsecret("") {}
-    WXcmd(const std::string& _corpid, const std::string& _corpsecret)
-      : access_token(""), corpid(_corpid), corpsecret(_corpsecret) {}
+    Cmd() = default;
+    Cmd(std::string corpid_, std::string corpsecret_)
+      : corpid(std::move(corpid_)), corpsecret(std::move(corpsecret_)) {}
 
-    void add_cmd(const std::string& tag, const WXcmd_func& func)
+    void add_cmd(const std::string& tag, const Cmd_func& func)
     {
       commands[tag] = func;
     }
     std::string command(const std::string& stmt, const std::string& UserID)
     {
-      auto i = stmt.find(" ");
-      std::string cmd = "";
-      std::string args = "";
+      auto i = stmt.find(' ');
+      std::string cmd;
+      std::string args;
       if (i == std::string::npos)
       {
         cmd = stmt.substr(1);
@@ -48,14 +48,14 @@ namespace ws
         send("text", temp, UserID);
         return temp;
       }
-      WXcmd_ret ret = commands[cmd](args);
+      Cmd_ret ret = commands[cmd](args);
       send(ret.first, ret.second, UserID);
       return ret.second + "(" + ret.first + ")";
     }
 
     void send(const std::string& type, const std::string& msg, const std::string& id)
     {
-      std::string postdata = "";
+      std::string postdata;
       if (type == "text")
       {
         postdata = R""({
@@ -87,7 +87,7 @@ namespace ws
             })"";
       }
       else
-        throw WXerr(WS_ERROR_LOCATION, __func__, "error type '" + type + "'.");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "error type '" + type + "'.");
       wxpost(postdata);
     }
 
@@ -95,8 +95,8 @@ namespace ws
     std::string wxpost(const std::string& postdata)
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token;
-      WXhttp h(url);
-      std::string res = h.POST(postdata, WXhttp_is_postdata);
+      http::Http h(url);
+      std::string res = h.POST(postdata, http::Http::is_postdata);
       int k = res.find(",");
       std::string i = res.substr(0, k);
       if (i == "{\"errcode\":0") return res;
@@ -106,15 +106,15 @@ namespace ws
         wxpost(postdata);
       }
       else
-        throw WXerr(WS_ERROR_LOCATION, __func__, "res: " + res + "\npostdata: " + postdata + "\n");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "res: " + res + "\npostdata: " + postdata + "\n");
       return "";
     }
 
     std::string get_media_id(const std::string& path)
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token=" + access_token + "&type=file";
-      WXhttp h(url);
-      std::string res = h.POST(path, WXhttp_is_path);
+      http::Http h(url);
+      std::string res = h.POST(path, http::Http::is_path);
       int k = res.find(",");
       std::string s = res.substr(0, k);
       if (s == "{\"errcode\":0")
@@ -127,14 +127,14 @@ namespace ws
       }
       else
       {
-        throw WXerr(WS_ERROR_LOCATION, __func__, "res: " + res + "\npath: " + path + "\n");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "res: " + res + "\npath: " + path + "\n");
       }
     }
     void get_access_token()
       //获取access_token：https://open.work.weixin.qq.com/api/doc/90000/90135/91039
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + corpid + "&corpsecret=" + corpsecret;
-      WXhttp h(url);
+      http::Http h(url);
       std::string res = h.GET();
       int k = res.find("access_token");
       std::string temp = res.substr(k + 15);

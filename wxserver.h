@@ -2,12 +2,9 @@
 
 #include "wxerr.h"
 #include "wxmsg.h"
-#include "wxurl.h"
-#include "wxxml.h"
+#include "wxparser.h"
 #include "wxthpool.h"
 #include "wxcmd.h"
-#include "czh-cpp/czh.h"
-
 
 #include <ctime>
 #include <cstdio>
@@ -19,52 +16,57 @@
 #include <string>
 #include <map>
 #include <functional>
-//ÆóÒµÎ¢ÐÅapi£ºhttps://work.weixin.qq.com/api/doc/90001/90143/90372
-namespace ws
+//ï¿½ï¿½ÒµÎ¢ï¿½ï¿½apiï¿½ï¿½https://work.weixin.qq.com/api/doc/90001/90143/90372
+namespace ws::server
 {
-  class WXserver
+  class Server
   {
   private:
+    bool inited;
     int port;
-    WXmsg wxmsg;
-    WXcmd wxcmd;
+    msg::Msg wxmsg;
+    cmd::Cmd wxcmd;
     std::map<std::string, std::string> tags;
-    std::map<std::string, std::string> admin;
+    std::map<std::string, bool> admin;
   public:
-    WXserver(const std::string& path)
+    Server():inited(false) {}
+    Server& init(const std::string& path)
     {
-      CZH::CZH config(path);
+      czh::Czh config_czh(path);
+      auto config = *config_czh.parse();
 
-      std::string token = config.in("config")["Token"].get_value<std::string>();
-      std::string encoding_aes_key = config.in("config")["EncodingAESKey"].get_value<std::string>();
-      std::string corpid = config.in("config")["CorpID"].get_value<std::string>();
-      std::string corpsecret = config.in("config")["CorpSecret"].get_value<std::string>();
+      std::string token = config["config"]["Token"].get<std::string>();
+      std::string encoding_aes_key = config["config"]["EncodingAESKey"].get<std::string>();
+      std::string corpid = config["config"]["CorpID"].get<std::string>();
+      std::string corpsecret = config["config"]["CorpSecret"].get<std::string>();
       
-      port = config.in("config")["Port"].get_value<int>();
+      port = config["config"]["Port"].get<int>();
 
-      wxmsg = WXmsg(token, encoding_aes_key, corpid);
-      wxcmd = WXcmd(corpid, corpsecret);
+      wxmsg = msg::Msg(token, encoding_aes_key, corpid);
+      wxcmd = cmd::Cmd(corpid, corpsecret);
 
-      tags = config.in("tags").value_map<std::string>();
-      admin = config.in("admin").value_map<std::string>();
+      tags = *config["tags"].value_map<std::string>();
+      admin = *config["admin"].value_map<bool>();
+      return *this;
     }
     void run()
     {
-      int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);//½¨Á¢Ì×½Ó×Ö£¬Ê§°Ü·µ»Ø-1
+      if(!inited) init("config.czh");
+      int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);//ï¿½ï¿½ï¿½ï¿½ï¿½×½ï¿½ï¿½Ö£ï¿½Ê§ï¿½Ü·ï¿½ï¿½ï¿½-1
       sockaddr_in addr;
-      addr.sin_family = AF_INET; //Ö¸¶¨µØÖ·×å
-      addr.sin_addr.s_addr = INADDR_ANY;//IP³õÊ¼»¯
-      addr.sin_port = htons(port);//¶Ë¿ÚºÅ³õÊ¼»¯
+      addr.sin_family = AF_INET; //Ö¸ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½
+      addr.sin_addr.s_addr = INADDR_ANY;//IPï¿½ï¿½Ê¼ï¿½ï¿½
+      addr.sin_port = htons(port);//ï¿½Ë¿ÚºÅ³ï¿½Ê¼ï¿½ï¿½
 
-      bind(sock, (sockaddr*)&addr, sizeof(addr));//·ÖÅäIPºÍ¶Ë¿Ú
-      listen(sock, 0);//ÉèÖÃ¼àÌý
+      bind(sock, (sockaddr*)&addr, sizeof(addr));//ï¿½ï¿½ï¿½ï¿½IPï¿½Í¶Ë¿ï¿½
+      listen(sock, 0);//ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½
 
-      //ÉèÖÃ¿Í»§¶Ë
+      //ï¿½ï¿½ï¿½Ã¿Í»ï¿½ï¿½ï¿½
       sockaddr_in clientAddr;
       int clientAddrSize = sizeof(clientAddr);
       int clientSock;
-      //½ÓÊÜ¿Í»§¶ËÇëÇó
-      WXthpool thpool(16);
+      //ï¿½ï¿½ï¿½Ü¿Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+      thpool::Thpool thpool(16);
       std::function<void(const int,const std::string&)> func =
         [this](const int clientSock, const std::string& requestStr)
         {
@@ -72,7 +74,7 @@ namespace ws
           {
             this->url_router(clientSock, requestStr);
           }
-          catch (WXerr &err)
+          catch (error::Error &err)
           {
             std::string out = "---\nError:" + err.func_name + "() at '" + err.location + "':\n" 
                               + err.details + "\n---\n";
@@ -84,14 +86,14 @@ namespace ws
       
       while (-1 != (clientSock = accept(sock, (sockaddr*)&clientAddr, (socklen_t*)&clientAddrSize)))
       {
-        // ÊÕÇëÇó
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         std::string requestStr;
         int bufSize = 4096;
         requestStr.resize(bufSize);
-        //½ÓÊÜÊý¾Ý
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         recv(clientSock, &requestStr[0], bufSize, 0);
 
-        //·¢ËÍÏìÓ¦Í·
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦Í·
         std::string response =
           "HTTP/1.1 200 OK\r\n"
           "Content-Type: text/html; charset=gbk\r\n"
@@ -101,52 +103,54 @@ namespace ws
 
         thpool.add_task(func, clientSock, requestStr);
       }
-      close(sock);//¹Ø±Õ·þÎñÆ÷Ì×½Ó×Ö
+      close(sock);//ï¿½Ø±Õ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½
     }
+    void add_cmd(const std::string& tag, const cmd::Cmd_func& func)
+    {
+      wxcmd.add_cmd(tag, func);
+    }
+  private:
     void url_router(const int clientSock, const std::string& requestStr)
     {
       std::string out = "";
       std::string firstLine = requestStr.substr(0, requestStr.find("\r\n"));
       firstLine = firstLine.substr(firstLine.find(" ") + 1);
       std::string url = firstLine.substr(0, firstLine.find(" "));
-
-      WXurl req_url(url);
-      req_url.deescape();
+    
+      url::Url req_url(url);
       std::string req_type = requestStr.substr(0, 4);
-      if (req_type == "GET ")//Ó¦¸ÃÓÐ¿Õ¸ñ£¬GETÊÇÑéÖ¤URL£¬ÏêÇé¼ûapiÎÄµµ
+      if (req_type == "GET ")//Ó¦ï¿½ï¿½ï¿½Ð¿Õ¸ï¿½GETï¿½ï¿½ï¿½ï¿½Ö¤URLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½apiï¿½Äµï¿½
       {
-
-        std::string msg_sig = req_url.parse("msg_signature");
-        std::string timestamp = req_url.parse("timestamp");
-        std::string nonce = req_url.parse("nonce");
-        std::string req_echostr = req_url.parse("echostr");
+      
+        std::string msg_sig = req_url["msg_signature"];
+        std::string timestamp = req_url["timestamp"];
+        std::string nonce = req_url["nonce"];
+        std::string req_echostr = req_url["echostr"];
         std::string echostr = wxmsg.verify_url(msg_sig, timestamp, nonce, req_echostr);
         send(clientSock, echostr.c_str(), echostr.length(), 0);
         out += "verify url success\n";
       }
-      if (req_type == "POST")//POSTÊÇÊÕµ½»Ø¸´£¬ÏêÇé¼ûapiÎÄµµ
+      if (req_type == "POST")//POSTï¿½ï¿½ï¿½Õµï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½apiï¿½Äµï¿½
       {
         auto a = requestStr.find("<xml>");
         auto b = requestStr.find("</xml>");
         std::string temp = requestStr.substr(a, b + 6);
-        WXxml req_xml(temp);
-
-        std::string msg_sig = req_url.parse("msg_signature");
-        std::string timestamp = req_url.parse("timestamp");
-        std::string nonce = req_url.parse("nonce");
-       
-        auto cut = [](const std::string& str)->std::string{return str.substr(9, str.size() - 3 - 9);};
-
-        std::string msg_encrypt = cut(req_xml.parse("Encrypt"));
+        xml::Xml req_xml(temp);
+      
+        std::string msg_sig = req_url["msg_signature"];
+        std::string timestamp = req_url["timestamp"];
+        std::string nonce = req_url["nonce"];
+      
+        std::string msg_encrypt = req_xml["Encrypt"];
         std::string req_msg = wxmsg.decrypt_msg(msg_sig, timestamp, nonce, msg_encrypt);
-        WXxml plain_xml(req_msg);
-
-        std::string content = cut(plain_xml.parse("Content"));
+        xml::Xml plain_xml(req_msg);
+      
+        std::string content = plain_xml["Content"];
         out += "content: " + content + "\n";
-
-        std::string UserID = cut(plain_xml.parse("FromUserName"));
+      
+        std::string UserID = plain_xml["FromUserName"];
         out += "UserID: " + UserID + "\n";
-
+      
         if (tags.find(content) != tags.end())
         {
           wxcmd.send("text", tags[content], UserID);
@@ -163,30 +167,20 @@ namespace ws
           }
         }
       }
+      
       time_t now = time(0);
-      char* dt = ctime(&now);
-      out += "time: ";
-      out += dt;
-      out += "---------------completed---------------\n";
+      std::string dt = ctime(&now);
+      dt.pop_back();
+      out += "---------------" + dt + "---------------\n";
       std::cout << out;
       close(clientSock);
     }
-    void add_cmd(const std::string& tag, const WXcmd_func& func)
-    {
-      wxcmd.add_cmd(tag, func);
-    }
-  private:
-   inline bool check_user(const std::string& id)
+  
+    inline bool check_user(const std::string& id)
     {
       if (admin.find(id) == admin.end())
         return false;
-      else
-      {
-        if (admin[id] == "true")
-          return true;
-        else
-          return false;
-      }
-    } 
+      return admin[id];
+    }
   };
 }
