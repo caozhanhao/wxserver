@@ -6,11 +6,12 @@
 - 只有管理员可使用命令
 
 ## 使用方法
+- 需要一个企业微信
 ### config.czh
-- CorpID  我的企业/企业信息/企业ID
-- CorpSecret  应用管理/xxx/Secret
-- Token和EncodingAESKey 应用管理/xxx/功能/设置API接收/
-- xxx为你的应用名称，没有就创建一个
+- CorpID                  我的企业/企业信息/企业ID
+- CorpSecret              应用管理/xxx/Secret
+- Token和EncodingAESKey   应用管理/xxx/功能/设置API接收/
+- 以上xxx代表应用名称，没有就创建一个
 - tags为自动回复
 - admin为管理员，使用"true"启用
 ### 依赖
