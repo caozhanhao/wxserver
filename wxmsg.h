@@ -30,7 +30,7 @@ namespace ws::msg
     
     int osize = int(str_encrypt.size());
     char *out = (char*)malloc(osize);
-    if(out == NULL)
+    if(out == nullptr)
       throw error::Error(WS_ERROR_LOCATION, __func__, "malloc error");
 
     int rsize = 0;
@@ -48,7 +48,7 @@ namespace ws::msg
   std::string wx_sha1(const std::string& str)
   {
     unsigned char out[SHA_DIGEST_LENGTH] = { 0 };
-    if (SHA1((const unsigned char*)str.c_str(), str.size(), out) == NULL)
+    if (SHA1((const unsigned char*)str.c_str(), str.size(), out) == nullptr)
     {
       throw error::Error(WS_ERROR_LOCATION, __func__, "sha1 error");
     }
@@ -67,14 +67,15 @@ namespace ws::msg
   {
     std::string result;
 
-    unsigned char * out = (unsigned char*)malloc(str_encrypt.size());
-    if(out == NULL)
+    auto out = (unsigned char*)malloc(str_encrypt.size());
+    if(out == nullptr)
       throw error::Error(WS_ERROR_LOCATION, __func__, "malloc error");
 
     unsigned char ckey[32] = {0};
     unsigned char iv[16] = {0} ;
     memcpy(ckey, key.c_str(), key.size() > 32 ? 32 : key.size());
-    memcpy(iv, ckey, sizeof(iv) < sizeof(ckey) ? sizeof(iv) : sizeof(ckey));
+    //memcpy(iv, ckey, sizeof(iv) < sizeof(ckey) ? sizeof(iv) : sizeof(ckey));
+    memcpy(iv, ckey, sizeof(iv));
 
     AES_KEY aesKey;
     AES_set_decrypt_key(ckey, 8 * 32, &aesKey);
@@ -85,7 +86,6 @@ namespace ws::msg
       throw error::Error(WS_ERROR_LOCATION, __func__, "error");
 
     free(out);
-    out = nullptr;
     return result;
   }
   std::string wx_sort(std::initializer_list<std::string> args)
@@ -113,11 +113,11 @@ namespace ws::msg
     std::string corpid;
 
   public:
-    Msg() : token(""), encoding_aes_key(""), corpid("") {  }
-    Msg(const std::string& _token,
-        const std::string& _encoding_aes_key,
-        const std::string& _corpid)
-      :token(_token), encoding_aes_key(_encoding_aes_key), corpid(_corpid) { }
+    Msg() = default;
+    Msg(std::string token_,
+        std::string encoding_aes_key_,
+        std::string corpid_)
+      :token(std::move(token_)), encoding_aes_key(std::move(encoding_aes_key_)), corpid(std::move(corpid_)) { }
 
     int verify_sign(const std::string& msg_sign, const std::string& time_stamp,
       const std::string& nonce, const std::string& msg_encrypt)

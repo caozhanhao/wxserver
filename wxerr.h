@@ -18,6 +18,6 @@ namespace ws::error
     bool can_continue;
     public:
     Error(std::string _location, std::string _func_name, std::string _details, bool _can_continue = true)
-      :logic_error("Wxerr"), location(_location), func_name(_func_name), details(_details), can_continue(_can_continue) {}
+      :logic_error("Wxerr"), location(std::move(_location)), func_name(std::move(_func_name)), details(std::move(_details)), can_continue(_can_continue) {}
   };
 }

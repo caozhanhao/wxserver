@@ -1,11 +1,7 @@
-#include "wxerr.h"
 #include "wxserver.h"
 #include "wxcmd.h"
 #include "wxoption.h"
-
-#include <iostream>
 #include <string>
-
 int main(int argc, char **argv)
 {
   ws::server::Server server;
@@ -25,10 +21,10 @@ int main(int argc, char **argv)
   server.add_cmd("time", 
   [](const std::string& args) -> ws::cmd::Cmd_ret
   {
-    std::string res = "";
-    if(args != "")
+    std::string res;
+    if(!args.empty())
       res += "invalid argument('" + args + "')" + "\n";
-    time_t now = time(0);
+    time_t now = time(nullptr);
     res += ctime(&now);
     return {"text", res};
   });

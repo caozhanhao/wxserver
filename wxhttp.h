@@ -23,32 +23,28 @@ namespace ws::http
     static const bool is_path = false;
   private:
     std::string url;
-
   public:
-    Http(const std::string& _url) : url(_url) {  }
+    explicit Http(std::string _url) : url(std::move(_url)) {  }
     std::string POST(const std::string& str, bool postdata_or_path)//true postdata
     {
-      if (str == "")
+      if (str.empty())
         throw error::Error(WS_ERROR_LOCATION, __func__, std::string(postdata_or_path ? "postdata" : "path") + "is empty");
 
-      CURL* curl = NULL;
+      CURL* curl = nullptr;
       std::string readBuffer;
       curl = curl_easy_init();
-      if (curl == NULL)
+      if (curl == nullptr)
         throw error::Error(WS_ERROR_LOCATION, __func__, "curl_easy_init() failed");
-      // ����URL
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-      // ���ò���
       if (postdata_or_path)
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str.c_str());
-      // ����ΪPost
       curl_easy_setopt(curl, CURLOPT_POST, 1);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         
-      struct curl_slist* headerlist = NULL;
-      struct curl_httppost* curlFormPost = 0;
-      struct curl_httppost* curlLastPtrFormPost = 0;
+      struct curl_slist* headerlist = nullptr;
+      struct curl_httppost* curlFormPost = nullptr;
+      struct curl_httppost* curlLastPtrFormPost = nullptr;
 
       if (!postdata_or_path)
       {

@@ -93,17 +93,17 @@ namespace ws::cmd
     }
 
   private:
-    std::string wxpost(const std::string& postdata)
+    std::string wxpost(const std::string& postdata, bool failed = false)
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token;
       http::Http h(url);
       std::string res = h.POST(postdata, http::Http::is_postdata);
       auto errcode = json::Json(res).get_errcode();
       if (errcode == 0) return res;
-      else if (errcode == 41001 || errcode == 42001 || errcode == 40014)
+      else if ((errcode == 41001 || errcode == 42001 || errcode == 40014) && !failed)
       {
         get_access_token();
-        wxpost(postdata);
+        wxpost(postdata, true);
       }
       else
         throw error::Error(WS_ERROR_LOCATION, __func__, "errcode: "
@@ -119,9 +119,9 @@ namespace ws::cmd
       auto errcode = json::Json(res).get_errcode();
       if (errcode == 0)
       {
-        int a = res.find("media_id");
+        auto a = res.find("media_id");
         std::string media_id = res.substr(a + 11);
-        int b = media_id.find("\",\"created_at");
+        auto b = media_id.find("\",\"created_at");
         media_id = media_id.substr(0, b);
         return media_id;
       }

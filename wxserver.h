@@ -29,16 +29,16 @@ namespace ws::server
     std::map<std::string, std::string> tags;
     std::map<std::string, bool> admin;
   public:
-    Server():inited(false) {}
+    Server():inited(false), port(8345) {}
     Server& init(const std::string& path)
     {
       czh::Czh config_czh(path);
       auto config = *config_czh.parse();
 
-      std::string token = config["config"]["Token"].get<std::string>();
-      std::string encoding_aes_key = config["config"]["EncodingAESKey"].get<std::string>();
-      std::string corpid = config["config"]["CorpID"].get<std::string>();
-      std::string corpsecret = config["config"]["CorpSecret"].get<std::string>();
+      auto token = config["config"]["Token"].get<std::string>();
+      auto encoding_aes_key = config["config"]["EncodingAESKey"].get<std::string>();
+      auto corpid = config["config"]["CorpID"].get<std::string>();
+      auto corpsecret = config["config"]["CorpSecret"].get<std::string>();
       
       port = config["config"]["Port"].get<int>();
 
@@ -54,16 +54,17 @@ namespace ws::server
     {
       if(!inited) init("config.czh");
       int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);//�����׽��֣�ʧ�ܷ���-1
-      sockaddr_in addr;
-      addr.sin_family = AF_INET; //ָ����ַ��
-      addr.sin_addr.s_addr = INADDR_ANY;//IP��ʼ��
-      addr.sin_port = htons(port);//�˿ںų�ʼ��
+      sockaddr_in addr {};
+      addr.sin_family = AF_INET;
+      addr.sin_addr.s_addr = INADDR_ANY;
+      addr.sin_port = htons(port);
 
-      bind(sock, (sockaddr*)&addr, sizeof(addr));//����IP�Ͷ˿�
+      if(bind(sock, (sockaddr*)&addr, sizeof(addr)) != 0)
+        throw error::Error(WS_ERROR_LOCATION, __func__, "bind() failed.");
       listen(sock, 0);//���ü���
 
       //���ÿͻ���
-      sockaddr_in clientAddr;
+      sockaddr_in clientAddr{};
       int clientAddrSize = sizeof(clientAddr);
       int clientSock;
       //���ܿͻ�������
@@ -113,10 +114,10 @@ namespace ws::server
   private:
     void url_router(const int clientSock, const std::string& requestStr)
     {
-      std::string out = "";
+      std::string out;
       std::string firstLine = requestStr.substr(0, requestStr.find("\r\n"));
-      firstLine = firstLine.substr(firstLine.find(" ") + 1);
-      std::string url = firstLine.substr(0, firstLine.find(" "));
+      firstLine = firstLine.substr(firstLine.find(' ') + 1);
+      std::string url = firstLine.substr(0, firstLine.find(' '));
     
       url::Url req_url(url);
       std::string req_type = requestStr.substr(0, 4);
@@ -169,7 +170,7 @@ namespace ws::server
         }
       }
       
-      time_t now = time(0);
+      time_t now = time(nullptr);
       std::string dt = ctime(&now);
       dt.pop_back();//'\n'
       out += "---------------" + dt + "---------------\n";

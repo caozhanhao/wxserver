@@ -22,11 +22,10 @@ namespace ws::thpool
     std::queue<Task> tasks;
     std::atomic<bool> run;
     std::mutex th_mutex;
-    std::mutex err_mutex;
     std::exception_ptr err_ptr;
     std::condition_variable cond;
   public:
-    Thpool(std::size_t size): run(true) { add_thread(size); }
+    explicit Thpool(std::size_t size): run(true) { add_thread(size); }
     ~Thpool()
     {
       run = false;

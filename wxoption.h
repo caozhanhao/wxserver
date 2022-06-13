@@ -15,7 +15,7 @@ namespace ws::option
   class Option
   {
   public:
-    using CallbackArgType = std::vector<std::string>;
+    using CallbackArgType = std::vector<std::string>&;
     using CallbackType = std::function<void(CallbackArgType)>;
   private:
     class Token
@@ -24,8 +24,8 @@ namespace ws::option
       std::string arg;
       std::vector<std::string> values;
     public:
-      Token(const std::string& arg_, const std::initializer_list<std::string>& values_ = {})
-          : arg(arg_), values(values_) {  }
+      explicit Token(std::string arg, const std::initializer_list<std::string>& values_ = {})
+          : arg(std::move(arg)), values(values_) {  }
       void add(const std::string& v) { values.emplace_back(v); }
     };
     class Packed
@@ -35,8 +35,8 @@ namespace ws::option
     public:
       int priority;
     public:
-      Packed(const std::function<void()>& packed, int priority_)
-          : packed(packed), priority(priority_) {}
+      Packed(std::function<void()> packed, int priority_)
+          : packed(std::move(packed)), priority(priority_) {}
       void operator()()
       {
         packed();
@@ -48,12 +48,12 @@ namespace ws::option
       CallbackType func;
       int priority;
     public:
-      Callback(const CallbackType& func_, int priority_)
-          : func(func_), priority(priority_) {}
+      Callback(CallbackType func, int priority)
+          : func(std::move(func)), priority(priority) {}
       Callback() : func([](CallbackArgType) {}), priority(-1) {  }
       Packed pack(CallbackArgType arg)
       {
-        return Packed(std::bind(func, arg), priority);
+        return {std::bind(func, arg), priority};
       }
     };
   private:
@@ -149,11 +149,12 @@ namespace ws::option
     {
       if (funcs.find(str) != funcs.cend() || alias.find(str) != alias.cend())
         return false;
-      for (auto& r : str)
-      {
-        if (funcs.find(std::string(1, r)) == funcs.cend() && alias.find(std::string(1, r)) == alias.cend())
-          return false;
-      }
+      std::all_of(str.begin(), str.end(),
+                  [this](char r)
+                  {
+                      return !(funcs.find(std::string(1, r)) == funcs.cend() && alias.find(std::string(1, r)) == alias.cend());
+                  }
+        );
       return true;
     }
   };

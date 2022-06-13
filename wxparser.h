@@ -16,12 +16,12 @@ namespace ws
     private:
       rapidjson::Document json;
     public:
-      Json(const std::string &json_)
+      explicit Json(const std::string &json_)
       {
         json.Parse(json_.c_str());
       }
   
-      int get_errcode() const
+      [[nodiscard]] int get_errcode() const
       {
         return json["errcode"].GetInt();
       }
@@ -39,7 +39,7 @@ namespace ws
     private:
       tinyxml2::XMLDocument xml;
     public:
-      Xml(const std::string &xml_)
+      explicit Xml(const std::string &xml_)
       {
         xml.Parse(xml_.c_str());
       }
@@ -58,7 +58,7 @@ namespace ws
     private:
       std::string url;
     public:
-      Url(const std::string& req_url) : url(req_url) {deescape();};
+      explicit Url(std::string req_url) : url(std::move(req_url)) {deescape();};
       
       std::string operator[](const std::string& tag)
       {
@@ -66,8 +66,8 @@ namespace ws
         if (a == -1)
           return "can not find";
         std::string temp = url.substr(a);
-        int b = int(temp.find("&"));
-        int c = int(temp.find("="));
+        int b = int(temp.find('&'));
+        int c = int(temp.find('='));
         return  temp.substr(c + 1, b - c - 1);
       }
       std::string get()
@@ -93,7 +93,7 @@ namespace ws
         url = result;
         return *this;
       }
-      short int hexChar2dec(char c)
+      static short int hexChar2dec(char c)
       {
         if ('0' <= c && c <= '9')
         {
