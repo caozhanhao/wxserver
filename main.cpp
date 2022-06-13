@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   
   server.add_cmd("file",
   [](const std::string& args) -> ws::cmd::Cmd_ret
-  { return {"file", args}; });    
+  { return {"file", args}; });
   
   server.add_cmd("time", 
   [](const std::string& args) -> ws::cmd::Cmd_ret

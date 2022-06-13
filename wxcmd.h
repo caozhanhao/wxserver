@@ -2,6 +2,7 @@
 
 #include "wxhttp.h"
 #include "wxerr.h"
+#include "wxparser.h"
 
 #include <string>
 #include <functional>
@@ -97,16 +98,16 @@ namespace ws::cmd
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token;
       http::Http h(url);
       std::string res = h.POST(postdata, http::Http::is_postdata);
-      int k = res.find(",");
-      std::string i = res.substr(0, k);
-      if (i == "{\"errcode\":0") return res;
-      else if (i == "{\"errcode\":41001" || i == "{\"errcode\":42001" || i == "{\"errcode\":40014")
+      auto errcode = json::Json(res).get_errcode();
+      if (errcode == 0) return res;
+      else if (errcode == 41001 || errcode == 42001 || errcode == 40014)
       {
         get_access_token();
         wxpost(postdata);
       }
       else
-        throw error::Error(WS_ERROR_LOCATION, __func__, "res: " + res + "\npostdata: " + postdata + "\n");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "errcode: "
+        + std::to_string(errcode) +"\nres: " + res + "\npostdata: " + postdata + "\n");
       return "";
     }
 
@@ -115,9 +116,8 @@ namespace ws::cmd
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token=" + access_token + "&type=file";
       http::Http h(url);
       std::string res = h.POST(path, http::Http::is_path);
-      int k = res.find(",");
-      std::string s = res.substr(0, k);
-      if (s == "{\"errcode\":0")
+      auto errcode = json::Json(res).get_errcode();
+      if (errcode == 0)
       {
         int a = res.find("media_id");
         std::string media_id = res.substr(a + 11);
@@ -127,7 +127,8 @@ namespace ws::cmd
       }
       else
       {
-        throw error::Error(WS_ERROR_LOCATION, __func__, "res: " + res + "\npath: " + path + "\n");
+        throw error::Error(WS_ERROR_LOCATION, __func__, "errcode: "
+        + std::to_string(errcode) +"\nres: " + res + "\npath: " + path + "\n");
       }
     }
     void get_access_token()
@@ -136,11 +137,7 @@ namespace ws::cmd
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + corpid + "&corpsecret=" + corpsecret;
       http::Http h(url);
       std::string res = h.GET();
-      int k = res.find("access_token");
-      std::string temp = res.substr(k + 15);
-      int j = temp.find("\",\"expires_in\"");
-      temp = temp.substr(0, j);
-      access_token = temp;
+      access_token = json::Json(res)["access_token"];
     }
   };
 }

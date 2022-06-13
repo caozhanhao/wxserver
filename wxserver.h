@@ -47,6 +47,7 @@ namespace ws::server
 
       tags = *config["tags"].value_map<std::string>();
       admin = *config["admin"].value_map<bool>();
+      inited = true;
       return *this;
     }
     void run()
@@ -170,7 +171,7 @@ namespace ws::server
       
       time_t now = time(0);
       std::string dt = ctime(&now);
-      dt.pop_back();
+      dt.pop_back();//'\n'
       out += "---------------" + dt + "---------------\n";
       std::cout << out;
       close(clientSock);

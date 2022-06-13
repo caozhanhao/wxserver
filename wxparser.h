@@ -21,7 +21,12 @@ namespace ws
         json.Parse(json_.c_str());
       }
   
-      std::string operator[](const std::string& tag)
+      int get_errcode() const
+      {
+        return json["errcode"].GetInt();
+      }
+      
+      std::string operator[](const std::string& tag) const
       {
         return json[tag.c_str()].GetString();
       }
