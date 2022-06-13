@@ -13,7 +13,7 @@
 - Token和EncodingAESKey   应用管理/xxx/功能/设置API接收/
 - 以上xxx代表应用名称，没有就创建一个
 - tags为自动回复
-- admin为管理员，使用"true"启用
+- admin为管理员，使用true启用
 ### 依赖
 ```
 openssl 
@@ -21,7 +21,7 @@ curl
 ```
 ### 编译
 ```
-gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread -o wxserver
+gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread -ltinyxml2 -o wxserver
 ./wxserver -c config.czh
 ```
 
