@@ -32,7 +32,7 @@ namespace ws::server
     Server():inited(false), port(8345) {}
     Server& init(const std::string& path)
     {
-      czh::Czh config_czh(path);
+      czh::Czh config_czh(path, czh::Czh::file);
       auto config = *config_czh.parse();
 
       auto token = config["config"]["Token"].get<std::string>();
