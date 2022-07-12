@@ -3,10 +3,20 @@
 ## 功能
 - 收到config.czh中定义的自动回复，会回复指定内容。
 - 收到以`/`开头的会被识别为命令，使用命令必须以`/`开头
-- 只有管理员可使用命令
-
-## 使用方法
-- 需要一个企业微信
+- 管理员可使用命令
+- 
+## 安装
+### 依赖
+```
+openssl 
+curl
+tinyxml2
+```
+### 编译
+```
+gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread -ltinyxml2 -o wxserver -O3
+./wxserver -c config.czh
+```
 ### config.czh
 - CorpID                  我的企业/企业信息/企业ID
 - CorpSecret              应用管理/xxx/Secret
@@ -14,19 +24,11 @@
 - 以上xxx代表应用名称，没有就创建一个
 - tags为自动回复
 - admin为管理员，使用true启用
-### 依赖
-```
-openssl 
-curl
-```
-### 编译
-```
-gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread -ltinyxml2 -o wxserver
-./wxserver -c config.czh
-```
 
-## 添加命令
-- 使用`add_cmd(const std::string& tag, const Cmd_func& func)`添加命令,第一个参数是命令(不含`/`)，第二个参数是回调函数
+## 扩展
+### 添加命令
+`add_cmd(const std::string& tag, const Cmd_func& func)`
+- 第一个参数是命令(不含`/`)，第二个参数是回调函数
 - 回调函数接收一个const std::string&, 返回WXcmd_ret
 - Cmd_func 即为 std::function<Cmd_ret(const std::string&)>
 - Cmd_ret 即为 std::pair<const std::string, const std::string>，第一个string表发送类型(目前仅支持file,text)，第二个表内容。当发送类型为file时，内容为该文件路径
@@ -42,3 +44,4 @@ gcc main.cpp -lstdc++ -lcrypto -lcurl -lpthread -ltinyxml2 -o wxserver
 [用C++写一个简单的服务器(Linux)](https://blog.csdn.net/qq_29695701/article/details/83830108)  
 [C/C++中的__FUNCTION__，__FILE__和__LINE__](https://www.cnblogs.com/yooyoo/p/4717917.html)  
 [基于C++11的线程池(threadpool),简洁且可以带任意多的参数](https://www.cnblogs.com/lzpong/p/6397997.html)  
+[czh-cpp](https://gitee.com/cmvy2020/czh-cpp)

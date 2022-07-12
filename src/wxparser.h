@@ -1,7 +1,7 @@
 #pragma once
 #include "tinyxml2.h"
 #include "rapidjson/document.h"
-#include "czh-cpp/czh.h"
+#include "../czh-cpp/czh.h"
 #include <string>
 namespace ws
 {

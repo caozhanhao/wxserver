@@ -110,8 +110,8 @@ namespace ws::cmd
         + std::to_string(errcode) +"\nres: " + res + "\npostdata: " + postdata + "\n");
       return "";
     }
-
-    std::string get_media_id(const std::string& path)
+ 
+    std::string get_media_id(const std::string& path) const
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token=" + access_token + "&type=file";
       http::Http h(url);
