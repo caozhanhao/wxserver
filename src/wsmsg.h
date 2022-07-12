@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wxerr.h"
+#include "wslogger.h"
 
 #include "openssl/aes.h"
 #include "openssl/sha.h"
@@ -31,14 +31,14 @@ namespace ws::msg
     int osize = int(str_encrypt.size());
     char *out = (char*)malloc(osize);
     if(out == nullptr)
-      throw error::Error(WS_ERROR_LOCATION, __func__, "malloc error");
+      WS_FATAL("malloc error", -1);
 
     int rsize = 0;
     rsize =  EVP_DecodeBlock((unsigned char*)out, (const unsigned char*)str_encrypt.c_str(), int(str_encrypt.size()));
     if(rsize > eq && rsize < osize)
       ret.assign(out, rsize - eq);
     else
-      throw error::Error(WS_ERROR_LOCATION, __func__, "EVP_DecodeBlock() error");
+      WS_FATAL("EVP_DecodeBlock() error", -1);
       
     free(out);
     out = nullptr;
@@ -50,7 +50,7 @@ namespace ws::msg
     unsigned char out[SHA_DIGEST_LENGTH] = { 0 };
     if (SHA1((const unsigned char*)str.c_str(), str.size(), out) == nullptr)
     {
-      throw error::Error(WS_ERROR_LOCATION, __func__, "sha1 error");
+      WS_FATAL("sha1 error", -1);
     }
 
     std::string ret;
@@ -69,7 +69,7 @@ namespace ws::msg
 
     auto out = (unsigned char*)malloc(str_encrypt.size());
     if(out == nullptr)
-      throw error::Error(WS_ERROR_LOCATION, __func__, "malloc error");
+      WS_FATAL("malloc error", -1);
 
     unsigned char ckey[32] = {0};
     unsigned char iv[16] = {0} ;
@@ -83,7 +83,7 @@ namespace ws::msg
     if (out[str_encrypt.size() - 1] > 0 && out[str_encrypt.size() - 1] <= 32 && (str_encrypt.size() - out[str_encrypt.size() - 1]) > 0 )
       result.append((char*)out, str_encrypt.size() - out[str_encrypt.size() - 1]);
     else 
-      throw error::Error(WS_ERROR_LOCATION, __func__, "error");
+      WS_FATAL("error", -1);
 
     free(out);
     return result;
@@ -132,14 +132,14 @@ namespace ws::msg
       const std::string& nonce, const std::string& echo_str)
     {
       if (verify_sign(msg_sign, time_stamp, nonce, echo_str) != 0)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "verify sign failed.");
+        WS_FATAL("verify sign failed.", -1);
       return decrypt(echo_str);
     }
     std::string decrypt_msg(const std::string& msg_sign, const std::string& time_stamp,
       const std::string& nonce, const std::string& msg_encrypt)
     {
       if (verify_sign(msg_sign, time_stamp, nonce, msg_encrypt) != 0)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "verify sign failed.");
+        WS_FATAL("verify sign failed.", -1);
       return decrypt(msg_encrypt);
     }
 
@@ -156,7 +156,7 @@ namespace ws::msg
       std::string receiveid = msg_decrypt.substr(16 + 4 + msg_len);
       if (corpid != receiveid)
       {
-        throw error::Error(WS_ERROR_LOCATION, __func__, "receiveid('" + receiveid + "') != corpid('" + corpid + "')");
+        WS_FATAL("receiveid('" + receiveid + "') != corpid('" + corpid + "')", -1);
       }
       return ret;
     }

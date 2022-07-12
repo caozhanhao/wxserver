@@ -1,10 +1,10 @@
 #pragma once
 
-#include "wxerr.h"
-#include "wxmsg.h"
-#include "wxparser.h"
-#include "wxthpool.h"
-#include "wxcmd.h"
+#include "wslogger.h"
+#include "wsmsg.h"
+#include "wsparser.h"
+#include "wsthpool.h"
+#include "wscmd.h"
 
 #include <ctime>
 #include <cstdio>
@@ -16,7 +16,6 @@
 #include <string>
 #include <map>
 #include <functional>
-//��ҵ΢��api��https://work.weixin.qq.com/api/doc/90001/90143/90372
 namespace ws::server
 {
   class Server
@@ -43,7 +42,7 @@ namespace ws::server
       port = config["config"]["Port"].get<int>();
 
       wxmsg = msg::Msg(token, encoding_aes_key, corpid);
-      wxcmd = cmd::Cmd(corpid, corpsecret);
+      wxcmd.set_corp(corpid, corpsecret);
 
       tags = *config["tags"].value_map<std::string>();
       admin = *config["admin"].value_map<bool>();
@@ -65,38 +64,29 @@ namespace ws::server
     Server& run()
     {
       if(!inited) init("config.czh");
-      int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);//�����׽��֣�ʧ�ܷ���-1
+      int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
       sockaddr_in addr {};
       addr.sin_family = AF_INET;
       addr.sin_addr.s_addr = INADDR_ANY;
       addr.sin_port = htons(port);
+      
+      int on = 1;
+      setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
       if(bind(sock, (sockaddr*)&addr, sizeof(addr)) != 0)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "bind() failed.");
+        WS_FATAL("bind() failed.", -1);
       listen(sock, 0);//���ü���
 
-      //���ÿͻ���
       sockaddr_in clientAddr{};
       int clientAddrSize = sizeof(clientAddr);
       int clientSock;
-      //���ܿͻ�������
       thpool::Thpool thpool(16);
       std::function<void(const int,const std::string&)> func =
         [this](const int clientSock, const std::string& requestStr)
         {
-          try
-          {
             this->url_router(clientSock, requestStr);
-          }
-          catch (error::Error &err)
-          {
-            std::string out = "---\nError:" + err.func_name + "() at '" + err.location + "':\n" 
-                              + err.details + "\n---\n";
-            std::cout << out;
-            if(!err.can_continue) exit(-1);
-          }
         };
-      std::cout << "Server started successfully\n";
+      WS_NOTICE("Server started successfully");
       for(auto& r : get_admins())
       {
         if(r.second)
@@ -106,14 +96,11 @@ namespace ws::server
       }
       while (-1 != (clientSock = accept(sock, (sockaddr*)&clientAddr, (socklen_t*)&clientAddrSize)))
       {
-        // ������
         std::string requestStr;
         int bufSize = 4096;
         requestStr.resize(bufSize);
-        //��������
         recv(clientSock, &requestStr[0], bufSize, 0);
 
-        //������Ӧͷ
         std::string response =
           "HTTP/1.1 200 OK\r\n"
           "Content-Type: text/html; charset=gbk\r\n"
@@ -131,30 +118,33 @@ namespace ws::server
       wxcmd.add_cmd(tag, func);
       return *this;
     }
-
+    Server& add_rehabilitative_cmd(const std::string& tag, const cmd::Rehabilitative_cmd_func& func)
+    {
+      wxcmd.add_rehabilitative_cmd(tag, func);
+      return *this;
+    }
   private:
     void url_router(const int clientSock, const std::string& requestStr)
     {
-      std::string out;
       std::string firstLine = requestStr.substr(0, requestStr.find("\r\n"));
       firstLine = firstLine.substr(firstLine.find(' ') + 1);
       std::string url = firstLine.substr(0, firstLine.find(' '));
     
       url::Url req_url(url);
       std::string req_type = requestStr.substr(0, 4);
-      if (req_type == "GET ")//Ӧ���пո�GET����֤URL�������api�ĵ�
+      if (req_type == "GET ")
       {
-      
         std::string msg_sig = req_url["msg_signature"];
         std::string timestamp = req_url["timestamp"];
         std::string nonce = req_url["nonce"];
         std::string req_echostr = req_url["echostr"];
         std::string echostr = wxmsg.verify_url(msg_sig, timestamp, nonce, req_echostr);
         send(clientSock, echostr.c_str(), echostr.length(), 0);
-        out += "verify url success\n";
+        WS_NOTICE("verify url successfully\n");
       }
-      if (req_type == "POST")//POST���յ��ظ��������api�ĵ�
+      if (req_type == "POST")
       {
+        std::string notice;
         auto a = requestStr.find("<xml>");
         auto b = requestStr.find("</xml>");
         std::string temp = requestStr.substr(a, b + 6);
@@ -169,33 +159,29 @@ namespace ws::server
         xml::Xml plain_xml(req_msg);
       
         std::string content = plain_xml["Content"];
-        out += "content: " + content + "\n";
-      
         std::string UserID = plain_xml["FromUserName"];
-        out += "UserID: " + UserID + "\n";
-      
+        notice += "UserID: " + UserID;
+        notice += "|Content: " + content;
         if (tags.find(content) != tags.end())
         {
           wxcmd.send("text", tags[content], UserID);
-          out += "res: " + tags[content] += "\n";
+          notice += "|Response: " + tags[content];
         }
         else if (content[0] == '/')
         {
           if (check_user(UserID))
-            out += "res: " + wxcmd.command(content, UserID) + "\n";
+            notice += "|Response: " + wxcmd.command(content, UserID);
           else
           {
             wxcmd.send("text", "Permission denied", UserID);
-            out += "res: Permission denied\n";
+            notice += "|Response: Permission denied";
           }
         }
+        WS_NOTICE(notice);
       }
-      
       time_t now = time(nullptr);
       std::string dt = ctime(&now);
       dt.pop_back();//'\n'
-      out += "---------------" + dt + "---------------\n";
-      std::cout << out;
       close(clientSock);
     }
   

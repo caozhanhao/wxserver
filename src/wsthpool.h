@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wxerr.h"
+#include "wslogger.h"
 
 #include <vector>
 #include <functional>
@@ -67,7 +67,7 @@ namespace ws::thpool
     -> std::future<typename std::result_of<Func(Args...)>::type>
     {
       if(!run)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "add task on stopped Thpool");
+        WS_FATAL("add task on stopped Thpool", -1);
       using ret_type = typename std::result_of<Func(Args...)>::type;
       auto task = std::make_shared<std::packaged_task<ret_type()>>
         (std::bind(std::forward<Func>(f), std::forward<Args>(args)...));

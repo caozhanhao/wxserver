@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wxerr.h"
+#include "wslogger.h"
 
 #include <vector>
 #include <functional>
@@ -70,14 +70,14 @@ namespace ws::option
     Option& add(const std::string& arg, const CallbackType& func, int priority = -1)
     {
       if (parsed)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "Can not add() after parse().");
+        WS_FATAL("Can not add() after parse().", -1);
       funcs.insert(std::make_pair(arg, Callback(func, priority)));
       return *this;
     }
     Option& add(const std::string& arg, const std::string& alias_, const CallbackType& func, int priority = -1)
     {
       if (parsed)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "Can not add() after parse().");
+        WS_FATAL("Can not add() after parse().", -1);
       funcs.insert(std::make_pair(arg, Callback(func, priority)));
       alias.insert(std::make_pair(alias_, arg));
       return *this;
@@ -85,7 +85,7 @@ namespace ws::option
     Option& run()
     {
       if (!parsed)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "Option has not parsed.");
+        WS_FATAL("Option has not parsed.", -1);
       for (auto& r : tasks)
         r();
       return *this;

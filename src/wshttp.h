@@ -1,12 +1,10 @@
 #pragma once
 
-#include "wxerr.h"
+#include "wslogger.h"
 
 #include <curl/curl.h>
 #include <iostream>
 #include <string>
-//libcurl��https://curl.se/libcurl/c/libcurl-tutorial.html
-//C++��libcurl��ȡ����CURLcodeתΪstd::string��https://blog.csdn.net/qq_42311391/article/details/105159480
 namespace ws::http
 {
   size_t WriteCallback(char* contents, size_t size, size_t nmemb, void* userp)
@@ -28,13 +26,13 @@ namespace ws::http
     std::string POST(const std::string& str, bool postdata_or_path)//true postdata
     {
       if (str.empty())
-        throw error::Error(WS_ERROR_LOCATION, __func__, std::string(postdata_or_path ? "postdata" : "path") + "is empty");
+        WS_FATAL(std::string(postdata_or_path ? "postdata" : "path") + "is empty", -1);
 
       CURL* curl = nullptr;
       std::string readBuffer;
       curl = curl_easy_init();
       if (curl == nullptr)
-        throw error::Error(WS_ERROR_LOCATION, __func__, "curl_easy_init() failed");
+        WS_FATAL("curl_easy_init() failed", -1);
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
       if (postdata_or_path)
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str.c_str());
@@ -70,7 +68,7 @@ namespace ws::http
       
       if (res != CURLE_OK)
       {
-        throw error::Error(WS_ERROR_LOCATION, __func__, "CURLcode is not CURLE_OK");
+        WS_FATAL("CURLcode is not CURLE_OK", -1);
       }
       return readBuffer;
     }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "wxhttp.h"
-#include "wxerr.h"
-#include "wxparser.h"
+#include "wshttp.h"
+#include "wslogger.h"
+#include "wsparser.h"
 
 #include <string>
 #include <functional>
@@ -12,6 +12,7 @@ namespace ws::cmd
 {
   using Cmd_ret = std::pair<const std::string, const std::string>;
   using Cmd_func = std::function<Cmd_ret(const std::string&)>;
+  using Rehabilitative_cmd_func = std::function<void(const std::string&)>;
   class Cmd
   {
   private: 
@@ -19,14 +20,23 @@ namespace ws::cmd
     std::string corpid;
     std::string corpsecret;
     std::map<std::string, Cmd_func> commands;
+    std::map<std::string, Rehabilitative_cmd_func> rehabilitative_commands;
   public:
     Cmd() = default;
     Cmd(std::string corpid_, std::string corpsecret_)
       : corpid(std::move(corpid_)), corpsecret(std::move(corpsecret_)) {}
-
+    void set_corp(const std::string& corpid_, const std::string corpsecret_)
+    {
+      corpid = corpid_;
+      corpsecret = corpsecret_;
+    }
     void add_cmd(const std::string& tag, const Cmd_func& func)
     {
       commands[tag] = func;
+    }
+    void add_rehabilitative_cmd(const std::string& tag, const Rehabilitative_cmd_func& func)
+    {
+      rehabilitative_commands[tag] = func;
     }
     std::string command(const std::string& stmt, const std::string& UserID)
     {
@@ -51,6 +61,10 @@ namespace ws::cmd
       }
       Cmd_ret ret = commands[cmd](args);
       send(ret.first, ret.second, UserID);
+      if(rehabilitative_commands.find(cmd) != rehabilitative_commands.end())
+      {
+        rehabilitative_commands[cmd](args);
+      }
       return ret.second + "(" + ret.first + ")";
     }
 
@@ -88,12 +102,12 @@ namespace ws::cmd
             })"";
       }
       else
-        throw error::Error(WS_ERROR_LOCATION, __func__, "error type '" + type + "'.");
-      wxpost(postdata);
+        WS_FATAL("error type '" + type + "'.", -1);
+      wspost(postdata);
     }
 
   private:
-    std::string wxpost(const std::string& postdata, bool failed = false)
+    std::string wspost(const std::string& postdata, bool failed = false)
     {
       std::string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token;
       http::Http h(url);
@@ -103,11 +117,10 @@ namespace ws::cmd
       else if ((errcode == 41001 || errcode == 42001 || errcode == 40014) && !failed)
       {
         get_access_token();
-        wxpost(postdata, true);
+        wspost(postdata, true);
       }
       else
-        throw error::Error(WS_ERROR_LOCATION, __func__, "errcode: "
-        + std::to_string(errcode) +"\nres: " + res + "\npostdata: " + postdata + "\n");
+        WS_FATAL("errcode: " + std::to_string(errcode) +"\nres: " + res + "\npostdata: " + postdata + "\n", -1);
       return "";
     }
  
@@ -127,8 +140,7 @@ namespace ws::cmd
       }
       else
       {
-        throw error::Error(WS_ERROR_LOCATION, __func__, "errcode: "
-        + std::to_string(errcode) +"\nres: " + res + "\npath: " + path + "\n");
+        WS_FATAL("errcode: " + std::to_string(errcode) +"\nres: " + res + "\npath: " + path + "\n", -1);
       }
     }
     void get_access_token()

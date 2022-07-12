@@ -1,7 +1,9 @@
-#include "wxserver.h"
-#include "wxcmd.h"
-#include "wxoption.h"
+#include "wsserver.h"
+#include "wscmd.h"
+#include "wsoption.h"
+#include <opencv2/opencv.hpp>
 #include <string>
+#include <filesystem>
 int main(int argc, char **argv)
 {
   ws::server::Server server;
@@ -28,7 +30,22 @@ int main(int argc, char **argv)
                    res += ctime(&now);
                    return {"text", res};
                  });
-  
+  server.add_cmd("cam",
+                 [](const std::string& args) -> ws::cmd::Cmd_ret
+                 {
+                   cv::VideoCapture capture(0);
+                   cv::Mat Frame;
+                   capture>>Frame;
+                   std::string filename = args + ".jpg";
+                   imwrite(filename.c_str(), Frame);
+                   return {"file", filename};
+                 })
+                 .add_rehabilitative_cmd("cam",
+                 [](const std::string& args)
+                 {
+                   std::filesystem::path p(args + ".jpg");
+                   std::filesystem::remove(p);
+                 });
   server.run();
   return 0;
 }
