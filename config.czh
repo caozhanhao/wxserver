@@ -1,9 +1,9 @@
 config:
-    Port = 8345;
-    Token = "";
-    EncodingAESKey = "";
-    CorpID = "";
-    CorpSecret = "";
+    Port = 8345;            <Input your port as a int>
+    Token = null;           <Input your Token as a string>
+    EncodingAESKey = null;  <Input your EncodingAESKey as a string>
+    CorpID = null;          <Input your CorpID as a string>
+    CorpSecret = null;      <Input your CorpSecret as a string>
 end;
 
 tags:

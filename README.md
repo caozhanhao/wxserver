@@ -1,9 +1,9 @@
 # 企业微信消息推送服务器
 ## 示例
 ### server
-![server](https://gitee.com/cmvy2020/wxserver/raw/main/examples/wxserver-server.png)
+![server](examples/wxserver-server.png)
 ### weixin
-![weixin](https://gitee.com/cmvy2020/wxserver/raw/main/examples/wxserver-weixin.png)
+![weixin](examples/wxserver-weixin.png)
 ## 功能
 - 收到config.czh中定义的自动回复，会回复指定内容。
 - 收到以`/`开头的会被识别为命令，使用命令必须以`/`开头
@@ -14,8 +14,7 @@
 openssl 
 curl
 tinyxml2
-opencv
-czh
+libczh
 ```
 ### 使用 
 ```
@@ -50,9 +49,5 @@ cmake .. && make
 #### file
 - 发送文件
 - 参数为文件路径
-#### cam
-- 使用opencv拍照
-- 参数为文件名
-- 发送完服务器会删除
 ## 注意事项
 - 使用`file`命令和添加的命令发送文件时， 5B<文件大小<20MB
