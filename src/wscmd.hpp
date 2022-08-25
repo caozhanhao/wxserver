@@ -11,11 +11,11 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#ifndef WXSERVER_WSCMD_H
-#define WXSERVER_WSCMD_H
-#include "wshttp.h"
-#include "wslogger.h"
-#include "wsparser.h"
+#ifndef WXSERVER_WSCMD_HPP
+#define WXSERVER_WSCMD_HPP
+#include "wshttp.hpp"
+#include "wslogger.hpp"
+#include "wsparser.hpp"
 
 #include <string>
 #include <functional>

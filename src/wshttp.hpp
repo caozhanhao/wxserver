@@ -11,9 +11,9 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#ifndef WXSERVER_WSHTTP_H
-#define WXSERVER_WSHTTP_H
-#include "wslogger.h"
+#ifndef WXSERVER_WSHTTP_HPP
+#define WXSERVER_WSHTTP_HPP
+#include "wslogger.hpp"
 
 #include <curl/curl.h>
 #include <iostream>

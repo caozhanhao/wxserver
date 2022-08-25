@@ -11,9 +11,9 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#ifndef WXSERVER_WSMSG_H
-#define WXSERVER_WSMSG_H
-#include "wslogger.h"
+#ifndef WXSERVER_WSMSG_HPP
+#define WXSERVER_WSMSG_HPP
+#include "wslogger.hpp"
 
 #include "openssl/aes.h"
 #include "openssl/sha.h"

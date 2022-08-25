@@ -11,13 +11,13 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#ifndef WXSERVER_WSSERVER_H
-#define WXSERVER_WSSERVER_H
-#include "wslogger.h"
-#include "wsmsg.h"
-#include "wsparser.h"
-#include "wsthpool.h"
-#include "wscmd.h"
+#ifndef WXSERVER_WSSERVER_HPP
+#define WXSERVER_WSSERVER_HPP
+#include "wslogger.hpp"
+#include "wsmsg.hpp"
+#include "wsparser.hpp"
+#include "wsthpool.hpp"
+#include "wscmd.hpp"
 
 #include <ctime>
 #include <cstdio>

@@ -11,9 +11,9 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#ifndef WXSERVER_WSOPTION_H
-#define WXSERVER_WSOPTION_H
-#include "wslogger.h"
+#ifndef WXSERVER_WSOPTION_HPP
+#define WXSERVER_WSOPTION_HPP
+#include "wslogger.hpp"
 
 #include <vector>
 #include <functional>
