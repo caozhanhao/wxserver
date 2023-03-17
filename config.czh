@@ -1,16 +1,8 @@
 config:
-    Port = 8345;            <Input your port as a int>
-    Token = null;           <Input your Token as a string>
-    EncodingAESKey = null;  <Input your EncodingAESKey as a string>
-    CorpID = null;          <Input your CorpID as a string>
-    CorpSecret = null;      <Input your CorpSecret as a string>
+    Port = 8345;          <Input your port as a int>
+    Token = "";           <Input your Token as a string>
+    EncodingAESKey = "";  <Input your EncodingAESKey as a string>
+    CorpID = "";          <Input your CorpID as a string>
+    CorpSecret = "";      <Input your CorpSecret as a string>
 end;
 
-tags:
-    test = "yes";
-    ok = "ok"
-end;
-
-admin:
-    caozhanhao = true;
-end;

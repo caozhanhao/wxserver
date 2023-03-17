@@ -11,24 +11,13 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#include "wxserver.hpp"
-#include <string>
+#ifndef WXSERVER_WXSERVER_HPP
+#define WXSERVER_WXSERVER_HPP
+#pragma once
 
-int main()
-{
-  ws::Server server;
-  server.init("config.czh",
-              [](const ws::Request &req, ws::Response &res)
-              {
-                if (req.content == "hi")
-                {
-                  res.set_text("hello");
-                }
-                else if (req.content == "license")
-                {
-                  res.set_file("LICENSE");
-                }
-              });
-  server.run();
-  return 0;
-}
+#include "internal/logger.hpp"
+#include "internal/msgcrypto.hpp"
+#include "internal/server.hpp"
+#include "internal/wxcli.hpp"
+
+#endif

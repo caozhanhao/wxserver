@@ -1,6 +1,9 @@
-[submodule "czh-cpp"]
-	path = czh-cpp
-	url = https://gitee.com/cmvy2020/czh-cpp.git
-[submodule "libczh"]
-	path = libczh
-	url = https://gitee.com/cmvy2020/libczh
+[submodule "thirdparty/cpp-httplib"]
+	path = thirdparty/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "thirdparty/libczh"]
+	path = thirdparty/libczh
+	url = https://github.com/caozhanhao/libczh.git
+[submodule "thirdparty/json"]
+	path = thirdparty/json
+	url = https://github.com/nlohmann/json.git

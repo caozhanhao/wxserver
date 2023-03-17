@@ -1,4 +1,4 @@
-//   Copyright 2021-2022 wxserver - caozhanhao
+//   Copyright 2021 - 2023 wxserver - caozhanhao
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -11,23 +11,35 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#ifndef WXSERVER_WSMSG_HPP
-#define WXSERVER_WSMSG_HPP
-#include "wslogger.hpp"
+#ifndef WXSERVER_MSGCRYPTO_HPP
+#define WXSERVER_MSGCRYPTO_HPP
+#pragma once
+
+#include "internal/logger.hpp"
 
 #include "openssl/aes.h"
 #include "openssl/sha.h"
 #include "openssl/evp.h"
 
-#include <iostream>
+#if __has_include(<arpa/inet.h>)
+
 #include <arpa/inet.h>
+
+#elif __has_include(<winsock2.h>)
+#include <winsock2.h>
+#else
+#error "wxserver: Can not find ntohl()"
+#endif
+
+#include <iostream>
 #include <array>
 #include <algorithm>
 #include <vector>
 #include <string>
 #include <cstring>
 #include <map>
-namespace ws::msg
+
+namespace ws
 {
   std::string wx_decode_base64(const std::string &str_encrypt)
   {
@@ -36,7 +48,9 @@ namespace ws::msg
     for (auto r = str_encrypt.crbegin(); r < str_encrypt.crend(); r++)
     {
       if (*r == '=')
+      {
         eq++;
+      }
       else
         break;
     }
@@ -44,16 +58,20 @@ namespace ws::msg
     int osize = int(str_encrypt.size());
     char *out = (char *) malloc(osize);
     if (out == nullptr)
-      WS_FATAL("malloc error", -1);
-    
+    {
+      critical(no_fmt, "malloc error");
+    }
+  
     int rsize = 0;
     rsize = EVP_DecodeBlock((unsigned char *) out, (const unsigned char *) str_encrypt.c_str(),
                             int(str_encrypt.size()));
     if (rsize > eq && rsize < osize)
       ret.assign(out, rsize - eq);
     else
-      WS_FATAL("EVP_DecodeBlock() error", -1);
-    
+    {
+      critical(no_fmt, "EVP_DecodeBlock() error");
+    }
+  
     free(out);
     out = nullptr;
     return ret;
@@ -64,7 +82,7 @@ namespace ws::msg
     unsigned char out[SHA_DIGEST_LENGTH] = {0};
     if (SHA1((const unsigned char *) str.c_str(), str.size(), out) == nullptr)
     {
-      WS_FATAL("sha1 error", -1);
+      critical(no_fmt, "sha1 error");
     }
     
     std::string ret;
@@ -83,8 +101,10 @@ namespace ws::msg
     
     auto out = (unsigned char *) malloc(str_encrypt.size());
     if (out == nullptr)
-      WS_FATAL("malloc error", -1);
-    
+    {
+      critical(no_fmt, "malloc error");
+    }
+  
     unsigned char ckey[32] = {0};
     unsigned char iv[16] = {0};
     memcpy(ckey, key.c_str(), key.size() > 32 ? 32 : key.size());
@@ -98,8 +118,10 @@ namespace ws::msg
         (str_encrypt.size() - out[str_encrypt.size() - 1]) > 0)
       result.append((char *) out, str_encrypt.size() - out[str_encrypt.size() - 1]);
     else
-      WS_FATAL("error", -1);
-    
+    {
+      critical(no_fmt, "error");
+    }
+  
     free(out);
     return result;
   }
@@ -121,7 +143,7 @@ namespace ws::msg
   }
   
   
-  class Msg
+  class Crypto
   {
   private:
     std::string token;
@@ -129,11 +151,11 @@ namespace ws::msg
     std::string corpid;
   
   public:
-    Msg() = default;
+    Crypto() = default;
     
-    Msg(std::string token_,
-        std::string encoding_aes_key_,
-        std::string corpid_)
+    Crypto(std::string token_,
+           std::string encoding_aes_key_,
+           std::string corpid_)
         : token(std::move(token_)), encoding_aes_key(std::move(encoding_aes_key_)), corpid(std::move(corpid_)) {}
     
     int verify_sign(const std::string &msg_sign, const std::string &time_stamp,
@@ -141,7 +163,9 @@ namespace ws::msg
     {
       std::string dev_msg_sign = wx_sha1(wx_sort({token, time_stamp, nonce, msg_encrypt}));
       if (dev_msg_sign == msg_sign)
+      {
         return 0;
+      }
       else
         return -1;
     }
@@ -150,7 +174,9 @@ namespace ws::msg
                            const std::string &nonce, const std::string &echo_str)
     {
       if (verify_sign(msg_sign, time_stamp, nonce, echo_str) != 0)
-        WS_FATAL("verify sign failed.", -1);
+      {
+        critical(no_fmt, "verify sign failed.");
+      }
       return decrypt(echo_str);
     }
     
@@ -158,7 +184,9 @@ namespace ws::msg
                             const std::string &nonce, const std::string &msg_encrypt)
     {
       if (verify_sign(msg_sign, time_stamp, nonce, msg_encrypt) != 0)
-        WS_FATAL("verify sign failed.", -1);
+      {
+        critical(no_fmt, "verify sign failed.");
+      }
       return decrypt(msg_encrypt);
     }
   
@@ -175,7 +203,7 @@ namespace ws::msg
       std::string receiveid = msg_decrypt.substr(16 + 4 + msg_len);
       if (corpid != receiveid)
       {
-        WS_FATAL("receiveid('" + receiveid + "') != corpid('" + corpid + "')", -1);
+        critical(no_fmt, "receiveid('", receiveid, "') != corpid('", corpid, "')");
       }
       return ret;
     }
