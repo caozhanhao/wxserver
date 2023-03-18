@@ -28,17 +28,24 @@ namespace ws
   {
   private:
     std::string token;
+    std::string model;
     std::vector<std::string> past_user_inputs;
     std::vector<std::string> generated_responses;
   public:
-    ConversationalBot(std::string api_token) : token(std::move(api_token)) {}
-    
+    ConversationalBot(std::string model_, std::string api_token)
+        : token(std::move(api_token)), model(std::move(model_)) {}
+  
+    void change_model(const std::string &m)
+    {
+      model = m;
+    }
+  
     void clear_conversation()
     {
       past_user_inputs.clear();
       generated_responses.clear();
     }
-    
+  
     std::string input(const std::string &user_input)
     {
       httplib::SSLClient cli("api-inference.huggingface.co");
@@ -52,7 +59,7 @@ namespace ws
               },
               {"text", user_input}
           }}};
-      auto res = cli.Post("/models/facebook/blenderbot-400M-distill",
+      auto res = cli.Post("/models/" + model,
                           httplib::Headers{{"Authorization", "Bearer " + token}},
                           body.dump(), "application/json");
       if (res == nullptr)

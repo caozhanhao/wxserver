@@ -17,7 +17,9 @@
 #include <future>
 int main()
 {
-  ws::ConversationalBot bot(czh::Czh("hugging_face.czh", czh::InputMode::file).parse()["token"].get<std::string>());
+  ws::ConversationalBot bot("PaddlePaddle/plato-mini",
+                            czh::Czh("hugging_face.czh", czh::InputMode::file)
+                                .parse()["token"].get<std::string>());
   ws::Server server("config.czh");
   server.add_msg_handle(
       [&server, &bot](const ws::Request &req, ws::Response &res)
@@ -26,10 +28,16 @@ int main()
         {
           res.set_file("LICENSE");
         }
-        if (req.content == "clear conversation")
+        else if (req.content.starts_with("change model "))
+        {
+          auto model = req.content.substr(13);
+          bot.change_model(model);
+          res.set_text("Current model: " + model);
+        }
+        else if (req.content == "clear conversation")
         {
           bot.clear_conversation();
-          res.set_text("cleared.");
+          res.set_text("Cleared all conversations.");
         }
         else if (!req.content.empty())
         {
