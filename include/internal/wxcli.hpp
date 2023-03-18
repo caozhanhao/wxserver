@@ -38,7 +38,8 @@ namespace ws
     std::string corp_secret;
   public:
     Cli() = default;
-    
+  
+    Cli(const Cli &) = delete;
     Cli(std::string corp_id_, std::string corp_secret_)
         : corp_id(std::move(corp_id_)), corp_secret(std::move(corp_secret_)) {}
     
@@ -50,36 +51,40 @@ namespace ws
     
     void send_text(const std::string &msg, const std::string &id)
     {
-      std::string postdata = R""({
-           "touser" : ")"" + id + R""(",
-            "msgtype" : "text",
-            "agentid" : 1000002,                                                                                                                                                              
-            "text" : {
-                "content" : ")"" + msg + R""("
-                     },   
-            "safe":0,
-            "enable_id_trans": 0,
-            "enable_duplicate_check": 0,
-            "duplicate_check_interval": 1800
-            })"";
-      wxpost(postdata);
+      nlohmann::json postdata{
+          {"touser",                   id},
+          {"msgtype",                  "text"},
+          {"agentid",                  1000002},
+          {"text",
+                                       {
+                                           {"content", msg}
+                                       }
+          },
+          {"safe",                     0},
+          {"enable_id_trans",          0},
+          {"enable_duplicate_check",   0},
+          {"duplicate_check_interval", 1800}
+      };
+      wxpost(postdata.dump());
     }
     
     void send_file(const std::string &path, const std::string &id)
     {
-      std::string postdata = R""({
-           "touser" : ")"" + id + R""(",
-            "msgtype" : "file",
-            "agentid" : 1000002,
-            "file" : {
-                "media_id" : ")"" + get_media_id(path) + R""("
-                     },
-            "safe":0,
-            "enable_id_trans": 0,
-            "enable_duplicate_check": 0,
-            "duplicate_check_interval": 1800
-            })"";
-      wxpost(postdata);
+      nlohmann::json postdata{
+          {"touser",                   id},
+          {"msgtype",                  "file"},
+          {"agentid",                  1000002},
+          {"file",
+                                       {
+                                           {"media_id", get_media_id(path)}
+                                       }
+          },
+          {"safe",                     0},
+          {"enable_id_trans",          0},
+          {"enable_duplicate_check",   0},
+          {"duplicate_check_interval", 1800}
+      };
+      wxpost(postdata.dump());
     }
   
   private:
@@ -114,15 +119,16 @@ namespace ws
       }
       return "";
     }
-    
-    std::string get_media_id(const std::string &path) const
+  
+    std::string get_media_id(const std::string &path, bool no_retry = false)
     {
+      if (access_token.empty()) get_access_token();
       std::ifstream file{path, std::ios::binary};
       if (!std::filesystem::exists(path) || !file.good())
       {
         critical(no_fmt, "No such file.");
       }
-      
+    
       file.ignore(std::numeric_limits<std::streamsize>::max());
       size_t file_size = file.gcount();
       file.clear();
@@ -153,9 +159,17 @@ namespace ws
       auto json = nlohmann::json::parse(res->body);
       if (auto errcode = json["errcode"].get<int>(); errcode != 0)
       {
-        critical(no_fmt,
-                 "Get media id failed.",
-                 "errcode: ", std::to_string(errcode), ",res: ", res->body, ",path: ", path);
+        if ((errcode == 41001 || errcode == 42001 || errcode == 40014) && !no_retry)
+        {
+          get_access_token();
+          get_media_id(path, true);
+        }
+        else
+        {
+          critical(no_fmt,
+                   "Get media id failed.",
+                   "errcode: ", std::to_string(errcode), ",res: ", res->body, ",path: ", path);
+        }
       }
       return json["media_id"].get<std::string>();
     }

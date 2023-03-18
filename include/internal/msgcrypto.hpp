@@ -152,7 +152,8 @@ namespace ws
   
   public:
     Crypto() = default;
-    
+  
+    Crypto(const Crypto &) = delete;
     Crypto(std::string token_,
            std::string encoding_aes_key_,
            std::string corpid_)

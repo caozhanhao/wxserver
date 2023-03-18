@@ -97,19 +97,25 @@ namespace ws
   class Server
   {
   private:
-    using HandleType = std::function<void(const Request &, Response &)>;
+    using MsgHandle = std::function<void(const Request &, Response &)>;
     bool inited;
     int port;
     Crypto crypto;
     Cli wxcli;
     httplib::Server svr;
-    HandleType handle;
+    MsgHandle msg_handle;
   public:
     Server() : inited(false), port(8345) {}
-    
-    Server &init(const std::string &config_path, const HandleType &handle_)
+  
+    Server(const Server &) = delete;
+  
+    Server(const std::string &config_path)
     {
-      handle = handle_;
+      init(config_path);
+    }
+  
+    Server &init(const std::string &config_path)
+    {
       init_logger(Severity::NONE, Output::console);
       czh::Czh config_czh(config_path, ::czh::InputMode::file);
       ::czh::Node config;
@@ -130,15 +136,21 @@ namespace ws
       auto encoding_aes_key = config["config"]["EncodingAESKey"].get<std::string>();
       auto corp_id = config["config"]["CorpID"].get<std::string>();
       auto corp_secret = config["config"]["CorpSecret"].get<std::string>();
-      
+    
       port = config["config"]["Port"].get<int>();
       crypto = Crypto(token, encoding_aes_key, corp_id);
       wxcli.set_corp(corp_id, corp_secret);
-      
+    
       inited = true;
       return *this;
     }
-    
+  
+    Server &add_msg_handle(const MsgHandle &handle)
+    {
+      msg_handle = handle;
+      return *this;
+    }
+  
     Server &run()
     {
       if (!inited)
@@ -182,9 +194,13 @@ namespace ws
                  {
                    wxreq.msg_type = Request::MsgType::unknown;
                  }
-        
-                 handle(wxreq, wxres);
-        
+  
+                 if (msg_handle)
+                 {
+                   msg_handle(wxreq, wxres);
+                 }
+  
+                 std::string notice;
                  auto to_user_id = wxres.to_user.empty() ? wxreq.user_id : wxres.to_user;
                  switch (wxres.msg_type)
                  {
@@ -200,18 +216,42 @@ namespace ws
                      critical(no_fmt, "Unknown response type");
                      break;
                  }
-        
-                 info(no_fmt, "From: ", wxreq.user_id,
-                      " | Content: ", wxreq.content,
-                      " | Respond to: ", to_user_id,
-                      " | Response: ", wxres.data);
+  
+                 notice += "From: " + wxreq.user_id +
+                           +" | Content: " + wxreq.content;
+  
+                 if (wxres.msg_type != Response::MsgType::none)
+                 {
+                   notice +=
+                       " | To: " + to_user_id
+                       + " | Response "
+                       + (wxres.msg_type == Response::MsgType::file ? "File: " : "Text: ")
+                       + wxres.data;
+                 }
+                 info(no_fmt, notice);
                });
       info(no_fmt, "Server started.");
       svr.listen("127.0.0.1", port);
       return *this;
     }
-    
-    auto &get_cli() { return wxcli; }
+  
+    Server &send_text(const std::string &msg, const std::string &id)
+    {
+      info(no_fmt,
+           "To: ", id,
+           " | Response Text: ", msg);
+      wxcli.send_text(msg, id);
+      return *this;
+    }
+  
+    Server &send_file(const std::string &path, const std::string &id)
+    {
+      info(no_fmt,
+           "To: ", id,
+           " | Response File: ", path);
+      wxcli.send_file(path, id);
+      return *this;
+    }
   };
 }
 #endif

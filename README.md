@@ -3,7 +3,7 @@ wxserver
 </h2> 
 
 <p align="center">
-<strong>企业微信消息推送服务器</strong>
+<strong>C++ Header-only 企业微信消息推送服务器</strong>
 </p>
 
 ### server
@@ -16,20 +16,23 @@ wxserver
 
 ### 使用方法
 
-- 下面是一个简单的示例
+- 下面是一个消息回复示例
 
 ```c++
-server.init("config.czh",
-  [](const ws::Request& req, ws::Response& res)
-  {
-    if(req.content == "Author")
-      res.set_text("caozhanhao");
-    else if(req.content == "License")
-      res.set_file("LICENSE");
-    else
-      res.set_text("hello");
-  });
+  ws::Server server("config.czh");
+server.add_msg_handle(
+[&server](const ws::Request &req, ws::Response &res)
+{
+if (req.content == "license")
+{
+res.set_file("LICENSE");
+}
+});
+server.run();
 ```
+
+- 通过上述方法也可接入一个AI, 在[bot_example.hpp](bot_example.hpp)用Hugging Face接入了blenderbot。
+- 使用该示例时需要在运行目录有一个`hugging_face.czh`, 内容为`token = "Your access token"`
 
 ### config.czh
 
@@ -60,3 +63,4 @@ cmake .. && make
 - [nlohmann/json](https://github.com/nlohmann/json)
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 - [libczh](https://github.com/caozhanhao/libczh)
+- 需C++ 20
