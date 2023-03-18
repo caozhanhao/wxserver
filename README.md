@@ -31,7 +31,7 @@ res.set_file("LICENSE");
 server.run();
 ```
 
-- 通过上述方法也可接入一个AI, 在[bot_example.hpp](bot_example.hpp)用Hugging Face接入了blenderbot。
+- 通过上述方法也可接入一个AI, 在[bot_example.hpp](src/bot_example.hpp)用Hugging Face接入了blenderbot。
 - 使用该示例时需要在运行目录有一个`hugging_face.czh`, 内容为`token = "Your access token"`
 
 ### config.czh
