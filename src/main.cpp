@@ -11,13 +11,13 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#include "bot_example.hpp"
+#include "bot.hpp"
 #include "wxserver.hpp"
 #include <string>
 #include <future>
 int main()
 {
-  ws_example::Bot bot(czh::Czh("hugging_face.czh", czh::InputMode::file).parse()["token"].get<std::string>());
+  ws::ConversationalBot bot(czh::Czh("hugging_face.czh", czh::InputMode::file).parse()["token"].get<std::string>());
   ws::Server server("config.czh");
   server.add_msg_handle(
       [&server, &bot](const ws::Request &req, ws::Response &res)
@@ -25,6 +25,11 @@ int main()
         if (req.content == "license")
         {
           res.set_file("LICENSE");
+        }
+        if (req.content == "clear conversation")
+        {
+          bot.clear_conversation();
+          res.set_text("cleared.");
         }
         else if (!req.content.empty())
         {

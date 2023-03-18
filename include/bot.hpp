@@ -11,8 +11,8 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#ifndef WXSERVER_BOT_EXAMPLE_HPP
-#define WXSERVER_BOT_EXAMPLE_HPP
+#ifndef WXSERVER_BOT_HPP
+#define WXSERVER_BOT_HPP
 #pragma once
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 
@@ -22,16 +22,22 @@
 #include <string>
 #include <vector>
 
-namespace ws_example
+namespace ws
 {
-  class Bot
+  class ConversationalBot
   {
   private:
     std::string token;
     std::vector<std::string> past_user_inputs;
     std::vector<std::string> generated_responses;
   public:
-    Bot(std::string api_token) : token(std::move(api_token)) {}
+    ConversationalBot(std::string api_token) : token(std::move(api_token)) {}
+    
+    void clear_conversation()
+    {
+      past_user_inputs.clear();
+      generated_responses.clear();
+    }
     
     std::string input(const std::string &user_input)
     {
@@ -48,10 +54,7 @@ namespace ws_example
           }}};
       auto res = cli.Post("/models/facebook/blenderbot-400M-distill",
                           httplib::Headers{{"Authorization", "Bearer " + token}},
-                          httplib::MultipartFormDataItems
-                              {
-                                  {"body", body.dump(), "", "text/plain"}
-                              });
+                          body.dump(), "application/json");
       if (res == nullptr)
       {
         ws::error(ws::no_fmt, "Bot failed. ", httplib::to_string(res.error()));
@@ -66,6 +69,7 @@ namespace ws_example
       past_user_inputs.emplace_back(user_input);
       generated_responses.emplace_back(ret);
       ws::info(ws::no_fmt, "Bot | UserInput: ", user_input, " | Generated: ", ret);
+      ws::debug(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
       return ret;
     }
   };
