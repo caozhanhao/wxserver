@@ -17,7 +17,7 @@
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 
 #include "cpp-httplib/httplib.h"
-#include "internal/logger.hpp"
+#include "logger.hpp"
 
 #include "nlohmann/json.hpp"
 

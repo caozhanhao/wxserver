@@ -15,7 +15,7 @@
 #define WXSERVER_MSGCRYPTO_HPP
 #pragma once
 
-#include "internal/logger.hpp"
+#include "logger.hpp"
 
 #include "openssl/aes.h"
 #include "openssl/sha.h"
@@ -196,11 +196,11 @@ namespace ws
     {
       std::string aes_key = wx_decode_base64(encoding_aes_key + "=");
       std::string msg_decrypt = wx_decrypt_aes(wx_decode_base64(msg_encrypt), aes_key);
-      
-      uint32_t iNetLen = *((const uint32_t *) (msg_decrypt.c_str() + 16));
-      uint32_t msg_len = ntohl(iNetLen);
+  
+      uint32_t net_len = *((const uint32_t *) (msg_decrypt.c_str() + 16));
+      uint32_t msg_len = ntohl(net_len);
       std::string ret = msg_decrypt.substr(16 + 4, msg_len);
-      
+  
       std::string receiveid = msg_decrypt.substr(16 + 4 + msg_len);
       if (corpid != receiveid)
       {

@@ -1,8 +1,15 @@
-config:
-    Port = 8345;          <Input your port as a int>
-    Token = "";           <Input your Token as a string>
-    EncodingAESKey = "";  <Input your EncodingAESKey as a string>
-    CorpID = "";          <Input your CorpID as a string>
-    CorpSecret = "";      <Input your CorpSecret as a string>
+server:
+    port = 8345;
+    logging_path = null;
 end;
 
+weixin:
+    Token = "";
+    EncodingAESKey = "";
+    CorpID = "";
+    CorpSecret = "";
+end;
+
+hugging_face:
+    token = "";
+end;

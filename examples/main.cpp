@@ -11,30 +11,23 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#include "bot.hpp"
-#include "wxserver.hpp"
+#include "wxserver/bot.hpp"
+#include "wxserver/wxserver.hpp"
 #include <string>
 #include <future>
+
 int main()
 {
-  ws::ConversationalBot bot("PaddlePaddle/plato-mini",
-                            czh::Czh("hugging_face.czh", czh::InputMode::file)
-                                .parse()["token"].get<std::string>());
-  ws::Server server("config.czh");
+  ws::Server server;
+  auto config = ws::parse_config("config.czh");
+  server.load_config(config);
+  ws::ConversationalBot bot("facebook/blenderbot-400M-distill",
+                            config["hugging_face"]["token"].get<std::string>());
+  
   server.add_msg_handle(
       [&server, &bot](const ws::Request &req, ws::Response &res)
       {
-        if (req.content == "license")
-        {
-          res.set_file("LICENSE");
-        }
-        else if (req.content.starts_with("change model "))
-        {
-          auto model = req.content.substr(13);
-          bot.change_model(model);
-          res.set_text("Current model: " + model);
-        }
-        else if (req.content == "clear conversation")
+        if (req.content == "clear conversation")
         {
           bot.clear_conversation();
           res.set_text("Cleared all conversations.");

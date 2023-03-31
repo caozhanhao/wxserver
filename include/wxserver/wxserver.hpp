@@ -15,9 +15,9 @@
 #define WXSERVER_WXSERVER_HPP
 #pragma once
 
-#include "internal/logger.hpp"
-#include "internal/msgcrypto.hpp"
-#include "internal/server.hpp"
-#include "internal/wxcli.hpp"
+#include "wxserver/internal/logger.hpp"
+#include "wxserver/internal/msgcrypto.hpp"
+#include "wxserver/internal/server.hpp"
+#include "wxserver/internal/wxcli.hpp"
 
 #endif

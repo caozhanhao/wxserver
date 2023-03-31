@@ -15,8 +15,8 @@
 #define WXSERVER_SERVER_HPP
 #pragma once
 
-#include "internal/logger.hpp"
-#include "internal/msgcrypto.hpp"
+#include "logger.hpp"
+#include "msgcrypto.hpp"
 #include "wxcli.hpp"
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
@@ -87,12 +87,31 @@ namespace ws
       msg_type = MsgType::text;
       data = res;
     }
-    
+  
     void set_user(const std::string &user)
     {
       to_user = user;
     }
   };
+  
+  czh::Node parse_config(const std::string &path)
+  {
+    czh::Czh config_czh(path, ::czh::InputMode::file);
+    ::czh::Node config;
+    try
+    {
+      config = config_czh.parse();
+    }
+    catch (::czh::Error &e)
+    {
+      critical(no_fmt, "Failed to parse config.", e.get_content());
+    }
+    catch (::czh::CzhError &e)
+    {
+      critical(no_fmt, "Failed to parse config.", e.get_content());
+    }
+    return std::move(config);
+  }
   
   class Server
   {
@@ -105,52 +124,46 @@ namespace ws
     httplib::Server svr;
     MsgHandle msg_handle;
   public:
-    Server() : inited(false), port(8345) {}
-  
+    Server() : inited(false), port(-1) {}
+    
     Server(const Server &) = delete;
-  
-    Server(const std::string &config_path)
+    
+    Server &load_config(const czh::Node &config)
     {
-      init(config_path);
-    }
-  
-    Server &init(const std::string &config_path)
-    {
-      init_logger(Severity::NONE, Output::console);
-      czh::Czh config_czh(config_path, ::czh::InputMode::file);
-      ::czh::Node config;
-      try
+      auto token = config["weixin"]["Token"].get<std::string>();
+      auto encoding_aes_key = config["weixin"]["EncodingAESKey"].get<std::string>();
+      auto corp_id = config["weixin"]["CorpID"].get<std::string>();
+      auto corp_secret = config["weixin"]["CorpSecret"].get<std::string>();
+      port = config["server"]["port"].get<int>();
+      if (!config["server"]["logging_path"].is<czh::value::Null>())
       {
-        config = config_czh.parse();
+        init_logger(Severity::NONE, Output::file_and_console, config["server"]["logging_path"].get<std::string>());
       }
-      catch (::czh::Error &e)
+      else
       {
-        critical(no_fmt, "Failed to load config.", e.get_content());
-      }
-      catch (::czh::CzhError &e)
-      {
-        critical(no_fmt, "Failed to load config.", e.get_content());
+        init_logger(Severity::NONE, Output::console);
       }
       
-      auto token = config["config"]["Token"].get<std::string>();
-      auto encoding_aes_key = config["config"]["EncodingAESKey"].get<std::string>();
-      auto corp_id = config["config"]["CorpID"].get<std::string>();
-      auto corp_secret = config["config"]["CorpSecret"].get<std::string>();
-    
-      port = config["config"]["Port"].get<int>();
       crypto = Crypto(token, encoding_aes_key, corp_id);
       wxcli.set_corp(corp_id, corp_secret);
-    
+      
       inited = true;
       return *this;
     }
-  
+    
+    Server &load_config(const std::string &config_path)
+    {
+      auto config = parse_config(config_path);
+      load_config(config);
+      return *this;
+    }
+    
     Server &add_msg_handle(const MsgHandle &handle)
     {
       msg_handle = handle;
       return *this;
     }
-  
+    
     Server &run()
     {
       if (!inited)

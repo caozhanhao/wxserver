@@ -65,21 +65,20 @@ namespace ws
       if (res == nullptr)
       {
         ws::error(ws::no_fmt, "Bot failed. ", httplib::to_string(res.error()));
-        return "An error occurred please try again later.";
+        return "An error occurred, please try again later.";
       }
       if (res->status != 200)
       {
         ws::error(ws::no_fmt, "Bot failed. ", res->body);
-        return "An error occurred please try again later.";
+        return "An error occurred, please try again later.";
       }
       auto ret = nlohmann::json::parse(res->body)["generated_text"].get<std::string>();
       past_user_inputs.emplace_back(user_input);
       generated_responses.emplace_back(ret);
       ws::info(ws::no_fmt, "Bot | UserInput: ", user_input, " | Generated: ", ret);
-      ws::debug(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
+      ws::info(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
       return ret;
     }
   };
 }
-
 #endif
