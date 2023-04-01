@@ -21,8 +21,6 @@ int main()
   ws::Server server;
   auto config = ws::parse_config("config.czh");
   server.load_config(config);
-  ws_example::HuggingFace hf(config["hugging_face"]["model"].get<std::string>(),
-                             config["hugging_face"]["token"].get<std::string>());
   ws_example::ChatGPT chatgpt(config["openai"]["model"].get<std::string>(),
                               config["openai"]["token"].get<std::string>());
   if (!config["openai"]["proxy"].is<czh::value::Null>())

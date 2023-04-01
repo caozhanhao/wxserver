@@ -36,25 +36,28 @@ namespace ws
     std::string access_token;
     std::string corp_id;
     std::string corp_secret;
+    int agent_id;
   public:
     Cli() = default;
   
     Cli(const Cli &) = delete;
-    Cli(std::string corp_id_, std::string corp_secret_)
-        : corp_id(std::move(corp_id_)), corp_secret(std::move(corp_secret_)) {}
-    
-    void set_corp(const std::string &corpid_, const std::string corpsecret_)
+  
+    Cli(std::string corp_id_, std::string corp_secret_, int agent_id_)
+        : corp_id(std::move(corp_id_)), corp_secret(std::move(corp_secret_)), agent_id(agent_id_) {}
+  
+    void set_corp(const std::string &corpid_, const std::string corpsecret_, int agent_id_)
     {
       corp_id = corpid_;
       corp_secret = corpsecret_;
+      agent_id = agent_id_;
     }
-    
+  
     void send_text(const std::string &msg, const std::string &id)
     {
       nlohmann::json postdata{
           {"touser",                   id},
           {"msgtype",                  "text"},
-          {"agentid",                  1000002},
+          {"agentid",                  agent_id},
           {"text",
                                        {
                                            {"content", msg}
@@ -73,7 +76,7 @@ namespace ws
       nlohmann::json postdata{
           {"touser",                   id},
           {"msgtype",                  "file"},
-          {"agentid",                  1000002},
+          {"agentid",                  agent_id},
           {"file",
                                        {
                                            {"media_id", get_media_id(path)}

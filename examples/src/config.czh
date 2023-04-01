@@ -4,6 +4,7 @@ server:
 end;
 
 weixin:
+    AgentId = 1000002;
     Token = "";
     EncodingAESKey = "";
     CorpID = "";

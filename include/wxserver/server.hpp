@@ -130,6 +130,7 @@ namespace ws
     
     Server &load_config(const czh::Node &config)
     {
+      auto agent_id = config["weixin"]["AgentId"].get<int>();
       auto token = config["weixin"]["Token"].get<std::string>();
       auto encoding_aes_key = config["weixin"]["EncodingAESKey"].get<std::string>();
       auto corp_id = config["weixin"]["CorpID"].get<std::string>();
@@ -143,9 +144,9 @@ namespace ws
       {
         init_logger(Severity::NONE, Output::console);
       }
-      
+  
       crypto = Crypto(token, encoding_aes_key, corp_id);
-      wxcli.set_corp(corp_id, corp_secret);
+      wxcli.set_corp(corp_id, corp_secret, agent_id);
       
       inited = true;
       return *this;
