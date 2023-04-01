@@ -65,6 +65,14 @@ server.add_msg_handle(
     });
 ```
 
+##### 直接发送消息
+
+```c++
+  ws::Server server;
+server.load_config("config.czh");
+server.send_text("hello", "caozhanhao");
+```
+
 ### config.czh
 
 - 以下是必要的配置
@@ -76,6 +84,7 @@ server.add_msg_handle(
 
 | weixin               | info                   |
 |----------------------|------------------------|
+| AgentId              | 位于我的企业/xxx/AgentId     |
 | CorpID               | 位于我的企业/企业信息/企业ID       |
 | CorpSecret           | 位于应用管理/xxx/Secret      |
 | Token和EncodingAESKey | 位于应用管理/xxx/功能/设置API接收/ |
@@ -88,10 +97,12 @@ server.add_msg_handle(
 | model        | 需Conversational，如ingen51/DialoGPT-medium-GPT4 |
 | token        | HuggingFace token                             |
 
-| openai | info           |
-|--------|----------------|
-| model  | 如gpt-3.5-turbo |
-| token  | OpenAI token   |
+| openai     | info           |
+|------------|----------------|
+| model      | 如gpt-3.5-turbo |
+| token      | OpenAI token   |
+| proxy      | Http代理地址       |
+| proxy_port | Http代理端口       |
 
 - 以上xxx代表应用名称，没有就创建一个
 
@@ -126,3 +137,7 @@ g++ examples/src/main.cpp -I examples/src -I "C:\Program Files\OpenSSL-Win64\inc
 ### 贡献
 
 - 欢迎PR
+
+### 相关链接
+
+- [搭建微信机器人（可接入ChatGPT等）](https://zhuanlan.zhihu.com/p/618651568)
