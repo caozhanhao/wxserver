@@ -97,11 +97,19 @@ server.add_msg_handle(
 
 ### 编译
 
+- linux
+
+```shell
+g++ examples/src/main.cpp -I examples/src -I include -I thirdparty -I thirdparty/json/include -I thirdparty/libczh/include -lssl -lcrypto -lpthread -O2 -std=c++2a -o wxserver-linux
 ```
-mkdir build && cd build 
-cmake .. && make
-./wxserver 
+
+- windows
+
+```shell
+g++ examples/src/main.cpp -I examples/src -I "C:\Program Files\OpenSSL-Win64\include" -I include -I thirdparty -I thirdparty/json/include -I thirdparty/libczh/include -L "C:\Program Files\OpenSSL-Win64\lib" -lssl -lcrypto -l ws2_32 -l crypt32 -lpthread -O2 -std=c++2a -o wxserver-windows.exe
 ```
+
+注意将OpenSSL的目录替换为你自己的。
 
 ### 注意事项
 
