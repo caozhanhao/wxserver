@@ -18,4 +18,6 @@ end;
 openai:
     model = "gpt-3.5-turbo";
     token = "";
+    proxy = null;
+    proxy_port = null;
 end;

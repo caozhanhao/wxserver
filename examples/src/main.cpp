@@ -25,6 +25,11 @@ int main()
                              config["hugging_face"]["token"].get<std::string>());
   ws_example::ChatGPT chatgpt(config["openai"]["model"].get<std::string>(),
                               config["openai"]["token"].get<std::string>());
+  if (!config["openai"]["proxy"].is<czh::value::Null>())
+  {
+    chatgpt.set_proxy(config["openai"]["proxy"].get<std::string>(),
+                      config["openai"]["proxy_port"].get<int>());
+  }
   
   server.add_msg_handle(
       [&server, &chatgpt](const ws::Request &req, ws::Response &res)

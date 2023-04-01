@@ -87,20 +87,28 @@ namespace ws_example
     std::string token;
     std::string model;
     std::vector<nlohmann::json> messages;
+    std::string proxy;
+    int proxy_port;
   public:
     ChatGPT(std::string model_, std::string api_token)
-        : token(std::move(api_token)), model(std::move(model_)) {}
-    
+        : token(std::move(api_token)), model(std::move(model_)), proxy_port(-1) {}
+  
     void change_model(const std::string &m)
     {
       model = m;
     }
-    
+  
     void clear_conversation()
     {
       messages.clear();
     }
-    
+  
+    void set_proxy(const std::string proxy_, int port)
+    {
+      proxy = proxy_;
+      proxy_port = port;
+    }
+  
     std::string input(const std::string &user_input)
     {
       messages.emplace_back(nlohmann::json{{"role",    "user"},
@@ -110,7 +118,10 @@ namespace ws_example
           {"model",    model},
           {"messages", messages}
       };
-      cli.set_proxy("172.18.144.1", 10809);
+      if (proxy_port != -1)
+      {
+        cli.set_proxy(proxy, proxy_port);
+      }
       auto res = cli.Post("/v1/chat/completions",
                           httplib::Headers{{"Authorization", "Bearer " + token}},
                           body.dump(), "application/json");
