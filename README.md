@@ -6,13 +6,15 @@ wxserver
 <strong>C++ Header-only 企业微信消息推送服务器</strong>
 </p>
 
+下面是用wxserver接入的ChatGPT
+
 ### server
 
-![server](examples/wxserver-server.png)
+![server](examples/pic/wxserver-server.png)
 
 ### weixin
 
-![weixin](examples/wxserver-weixin.jpg)
+![weixin](examples/pic/wxserver-weixin.jpg)
 
 ### 使用方法
 
@@ -65,6 +67,8 @@ server.add_msg_handle(
 
 ### config.czh
 
+- 以下是必要的配置
+
 | server               | info |
 |----------------------|------|
 | port                 | 运行端口 |
@@ -76,9 +80,18 @@ server.add_msg_handle(
 | CorpSecret           | 位于应用管理/xxx/Secret      |
 | Token和EncodingAESKey | 位于应用管理/xxx/功能/设置API接收/ |
 
-| hugging_face | info                                    |
-|--------------|-----------------------------------------|
-| token        | [示例](examples/main.cpp)中接入了Hugging Face |
+- 以下为示例中需要的配置，非必须
+  [示例](examples/src/main.cpp)中接入了HuggingFace和OpenAI ChatGPT
+
+| hugging_face | info                                          |
+|--------------|-----------------------------------------------|
+| model        | 需Conversational，如ingen51/DialoGPT-medium-GPT4 |
+| token        | HuggingFace token                             |
+
+| openai | info           |
+|--------|----------------|
+| model  | 如gpt-3.5-turbo |
+| token  | OpenAI token   |
 
 - 以上xxx代表应用名称，没有就创建一个
 
@@ -101,3 +114,7 @@ cmake .. && make
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 - [libczh](https://github.com/caozhanhao/libczh)
 - 需C++ 20
+
+# 贡献
+
+- 欢迎PR

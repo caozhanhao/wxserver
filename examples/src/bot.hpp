@@ -16,15 +16,15 @@
 #pragma once
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 
-#include "wxserver.hpp"
+#include "wxserver/wxserver.hpp"
 #include "cpp-httplib/httplib.h"
 #include "nlohmann/json.hpp"
 #include <string>
 #include <vector>
 
-namespace ws
+namespace ws_example
 {
-  class ConversationalBot
+  class HuggingFace
   {
   private:
     std::string token;
@@ -32,20 +32,20 @@ namespace ws
     std::vector<std::string> past_user_inputs;
     std::vector<std::string> generated_responses;
   public:
-    ConversationalBot(std::string model_, std::string api_token)
+    HuggingFace(std::string model_, std::string api_token)
         : token(std::move(api_token)), model(std::move(model_)) {}
-  
+    
     void change_model(const std::string &m)
     {
       model = m;
     }
-  
+    
     void clear_conversation()
     {
       past_user_inputs.clear();
       generated_responses.clear();
     }
-  
+    
     std::string input(const std::string &user_input)
     {
       httplib::SSLClient cli("api-inference.huggingface.co");
@@ -75,6 +75,57 @@ namespace ws
       auto ret = nlohmann::json::parse(res->body)["generated_text"].get<std::string>();
       past_user_inputs.emplace_back(user_input);
       generated_responses.emplace_back(ret);
+      ws::info(ws::no_fmt, "Bot | UserInput: ", user_input, " | Generated: ", ret);
+      ws::info(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
+      return ret;
+    }
+  };
+  
+  class ChatGPT
+  {
+  private:
+    std::string token;
+    std::string model;
+    std::vector<nlohmann::json> messages;
+  public:
+    ChatGPT(std::string model_, std::string api_token)
+        : token(std::move(api_token)), model(std::move(model_)) {}
+    
+    void change_model(const std::string &m)
+    {
+      model = m;
+    }
+    
+    void clear_conversation()
+    {
+      messages.clear();
+    }
+    
+    std::string input(const std::string &user_input)
+    {
+      messages.emplace_back(nlohmann::json{{"role",    "user"},
+                                           {"content", user_input}});
+      httplib::SSLClient cli("api.openai.com");
+      nlohmann::json body{
+          {"model",    model},
+          {"messages", messages}
+      };
+      cli.set_proxy("172.18.144.1", 10809);
+      auto res = cli.Post("/v1/chat/completions",
+                          httplib::Headers{{"Authorization", "Bearer " + token}},
+                          body.dump(), "application/json");
+      if (res == nullptr)
+      {
+        ws::error(ws::no_fmt, "Bot failed. ", httplib::to_string(res.error()));
+        return "An error occurred, please try again later.";
+      }
+      if (res->status != 200)
+      {
+        ws::error(ws::no_fmt, "Bot failed. ", res->body);
+        return "An error occurred, please try again later.";
+      }
+      auto ret = nlohmann::json::parse(res->body)["choices"][0]["message"]["content"].get<std::string>();
+      messages.emplace_back(nlohmann::json::parse(res->body)["choices"][0]["message"]);
       ws::info(ws::no_fmt, "Bot | UserInput: ", user_input, " | Generated: ", ret);
       ws::info(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
       return ret;

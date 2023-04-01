@@ -1,0 +1,21 @@
+server:
+    port = 8345;
+    logging_path = null;
+end;
+
+weixin:
+    Token = "";
+    EncodingAESKey = "";
+    CorpID = "";
+    CorpSecret = "";
+end;
+
+hugging_face:
+    model = "ingen51/DialoGPT-medium-GPT4";
+    token = "";
+end;
+
+openai:
+    model = "gpt-3.5-turbo";
+    token = "";
+end;

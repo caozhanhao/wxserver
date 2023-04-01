@@ -98,7 +98,8 @@ namespace ws
   std::string wx_decrypt_aes(const std::string &str_encrypt, const std::string &key)
   {
     std::string result;
-    
+  
+  
     auto out = (unsigned char *) malloc(str_encrypt.size());
     if (out == nullptr)
     {

@@ -11,7 +11,7 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-#include "wxserver/bot.hpp"
+#include "bot.hpp"
 #include "wxserver/wxserver.hpp"
 #include <string>
 #include <future>
@@ -21,23 +21,25 @@ int main()
   ws::Server server;
   auto config = ws::parse_config("config.czh");
   server.load_config(config);
-  ws::ConversationalBot bot("facebook/blenderbot-400M-distill",
-                            config["hugging_face"]["token"].get<std::string>());
+  ws_example::HuggingFace hf(config["hugging_face"]["model"].get<std::string>(),
+                             config["hugging_face"]["token"].get<std::string>());
+  ws_example::ChatGPT chatgpt(config["openai"]["model"].get<std::string>(),
+                              config["openai"]["token"].get<std::string>());
   
   server.add_msg_handle(
-      [&server, &bot](const ws::Request &req, ws::Response &res)
+      [&server, &chatgpt](const ws::Request &req, ws::Response &res)
       {
         if (req.content == "clear conversation")
         {
-          bot.clear_conversation();
+          chatgpt.clear_conversation();
           res.set_text("Cleared all conversations.");
         }
         else if (!req.content.empty())
         {
           // asynchronous reply
-          std::thread([req, &server, &bot]()
+          std::thread([req, &server, &chatgpt]()
                       {
-                        auto ret = bot.input(req.content);
+                        auto ret = chatgpt.input(req.content);
                         server.send_text(ret, req.user_id);
                       }).detach();
         }
