@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 
 #elif __has_include(<winsock2.h>)
+#pragma comment(lib,"ws2_32.lib")
 #include <winsock2.h>
 #else
 #error "wxserver: Can not find ntohl()"

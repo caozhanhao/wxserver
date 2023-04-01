@@ -144,7 +144,8 @@ namespace ws
       httplib::SSLClient cli("qyapi.weixin.qq.com");
       httplib::MultipartFormDataItems items
           {
-              {"media", file_ss.str(), std::filesystem::path(path).filename(), "application/octet-stream"}
+              httplib::MultipartFormData
+                  {"media", file_ss.str(), std::filesystem::path(path).filename().string(), "application/octet-stream"}
           };
       httplib::Headers headers
           {
