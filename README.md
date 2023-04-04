@@ -24,7 +24,7 @@ wxserver
 ws::Server server;
 server.load_config("config.czh");
 server.add_msg_handle(
-    [&server](const ws::Request &req, ws::Response &res)
+    [&server](const ws::Request &req, ws::Message &res)
     {
       if (req.content == "license")
         res.set_file("LICENSE");
@@ -37,7 +37,7 @@ server.run();
 添加当接受的消息时的回调函数
 
 ```c++
-[&server](const ws::Request &req, ws::Response &res){}
+[&server](const ws::Request &req, ws::Message &res){}
 ```
 
 ##### ws::Resquest
@@ -45,22 +45,29 @@ server.run();
 - `user_id` 消息发送者的id
 - `content` 消息内容。
 
-##### ws::Response
+##### ws::Message
 
-- `set_user(user_id)` 回复的用户，默认为消息发送者
-- `set_text(str)`  回复字符串
-- `set_file(path)` 回复文件
-  `ws::Response`是在消息请求的响应包上带的消息，也可以异步发送消息, 如下
+###### `set_user(user_id)`
+指定回复的用户，默认为消息发送者
+###### `set_content(MsgType, data)`
+指定消息回复内容
+
+| MsgType              | info                                                                                                                         |
+|----------------------|------------------------------------------------------------------------------------------------------------------------------|
+| text              | 文本                                                                                                                           |
+| markdown               | [markdown子集](https://developer.work.weixin.qq.com/document/path/90236#%E6%94%AF%E6%8C%81%E7%9A%84markdown%E8%AF%AD%E6%B3%95) |
+| image           | 图片(path)                                                                                                                     |
+| file | 文件(path)                                                                                                                     |
 
 ```c++
 server.add_msg_handle(
-    [&server](const ws::Request &req, ws::Response &res)
+    [&server](const ws::Request &req, ws::Message &res)
     {
       std::thread(
           [req, &server]()
           {
             //do something
-            server.send_text(ret, req.user_id);
+            res.set_content(ws::MsgType::text, ret);
           }).detach();
     });
 ```
@@ -68,9 +75,11 @@ server.add_msg_handle(
 ##### 直接发送消息
 
 ```c++
-  ws::Server server;
-server.load_config("config.czh");
-server.send_text("hello", "caozhanhao");
+server.send_message({ws::MsgType::text, "hello", "caozhanhao"});
+server.send_message({ws::MsgType::file, "LICENSE", "caozhanhao"});
+server.send_message({ws::MsgType::image, "example.jpg", "caozhanhao"});
+server.send_message({ws::MsgType::markdown, "`hello world`", "caozhanhao"});
+// ... 同set_content
 ```
 
 ### config.czh

@@ -30,21 +30,16 @@ int main()
   }
   
   server.add_msg_handle(
-      [&server, &chatgpt](const ws::Request &req, ws::Response &res)
+      [&chatgpt](const auto &req, auto &res)
       {
         if (req.content == "clear conversation")
         {
           chatgpt.clear_conversation();
-          res.set_text("Cleared all conversations.");
+          res.set_content(ws::MsgType::text, "Cleared all conversations.");
         }
         else if (!req.content.empty())
         {
-          // asynchronous reply
-          std::thread([req, &server, &chatgpt]()
-                      {
-                        auto ret = chatgpt.input(req.content);
-                        server.send_text(ret, req.user_id);
-                      }).detach();
+          res.set_content(ws::MsgType::text, chatgpt.input(req.content));
         }
       });
   server.run();
