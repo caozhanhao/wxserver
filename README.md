@@ -9,6 +9,7 @@ wxserver
 ### 示例
 
 - 下面是用wxserver接入的ChatGPT
+- 详细[搭建过程](docs/zhihu.md)
 
 #### server
 

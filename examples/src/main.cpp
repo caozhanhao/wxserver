@@ -20,25 +20,30 @@ int main()
   ws::Server server;
   auto config = ws::parse_config("config.czh");
   server.load_config(config);
-  ws_example::ChatGPT chatgpt(config["openai"]["model"].get<std::string>(),
-                              config["openai"]["token"].get<std::string>());
+  
+  // ChatGPT
+  ws_example::ChatGPT bot(config["openai"]["model"].get<std::string>(),
+                          config["openai"]["token"].get<std::string>());
   if (!config["openai"]["proxy"].is<czh::value::Null>())
   {
-    chatgpt.set_proxy(config["openai"]["proxy"].get<std::string>(),
-                      config["openai"]["proxy_port"].get<int>());
+    bot.set_proxy(config["openai"]["proxy"].get<std::string>(),
+                  config["openai"]["proxy_port"].get<int>());
   }
+  //Hugging Face
+//  ws_example::HuggingFace bot(config["hugging_face"]["model"].get<std::string>(),
+//                          config["hugging_face"]["token"].get<std::string>());
   
   server.add_msg_handle(
-      [&chatgpt](const auto &req, auto &res)
+      [&bot](const auto &req, auto &res)
       {
         if (req.content == "clear conversation")
         {
-          chatgpt.clear_conversation();
+          bot.clear_conversation();
           res.set_content(ws::MsgType::text, "Cleared all conversations.");
         }
         else if (!req.content.empty())
         {
-          res.set_content(ws::MsgType::text, chatgpt.input(req.content));
+          res.set_content(ws::MsgType::text, bot.input(req.content));
         }
       });
   server.run();
