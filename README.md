@@ -6,13 +6,15 @@ wxserver
 <strong>C++ Header-only 企业微信消息推送服务器</strong>
 </p>
 
-下面是用wxserver接入的ChatGPT
+### 示例
 
-### server
+- 下面是用wxserver接入的ChatGPT
+
+#### server
 
 ![server](examples/pic/wxserver-server.png)
 
-### weixin
+#### weixin
 
 ![weixin](examples/pic/wxserver-weixin.jpg)
 
@@ -26,8 +28,7 @@ server.load_config("config.czh");
 server.add_msg_handle(
     [&server](const ws::Request &req, ws::Message &res)
     {
-      if (req.content == "license")
-        res.set_file("LICENSE");
+          res.set_content(ws::MsgType::text, "hello, world");
     });
 server.run();
 ```
@@ -72,7 +73,7 @@ server.add_msg_handle(
     });
 ```
 
-##### 直接发送消息
+#### 直接发送消息
 
 ```c++
 server.send_message({ws::MsgType::text, "hello", "caozhanhao"});
@@ -82,14 +83,33 @@ server.send_message({ws::MsgType::markdown, "`hello world`", "caozhanhao"});
 // ... 同set_content
 ```
 
-### config.czh
+#### 初始化
 
-- 以下是必要的配置
+##### 直接初始化
 
-| server               | info |
-|----------------------|------|
-| port                 | 运行端口 |
-| logging_path | 日志文件 |
+```c++
+Server(int port_, int agent_id, const std::string& token, const std::string encoding_aes_key,
+           const std::string corp_id, const std::string corp_secret,
+           bool enable_console_logger, const std::string& logging_path = "")
+```
+
+##### 从文件初始化
+
+```c++
+ws::Server server;
+server.load_config("config.czh");
+// or
+// auto config = ws::parse_config("config.czh");
+// server.load_config(config);
+```
+
+###### config.czh
+
+| server               | info            |
+|----------------------|-----------------|
+| port                 | 运行端口         |
+| enable_console_logger      | 日志控制台输出, false不输出 |
+| logging_path | 日志文件, null不输出到文件 |
 
 | weixin               | info                   |
 |----------------------|------------------------|
@@ -98,8 +118,7 @@ server.send_message({ws::MsgType::markdown, "`hello world`", "caozhanhao"});
 | CorpSecret           | 位于应用管理/xxx/Secret      |
 | Token和EncodingAESKey | 位于应用管理/xxx/功能/设置API接收/ |
 
-- 以下为示例中需要的配置，非必须
-  [示例](examples/src/main.cpp)中接入了HuggingFace和OpenAI ChatGPT
+注：以下为[示例](examples/src/bot.hpp)中需要的配置文件，不是wxserver必须的
 
 | hugging_face | info                                          |
 |--------------|-----------------------------------------------|
@@ -112,24 +131,21 @@ server.send_message({ws::MsgType::markdown, "`hello world`", "caozhanhao"});
 | token      | OpenAI token   |
 | proxy      | Http代理地址       |
 | proxy_port | Http代理端口       |
-
-- 以上xxx代表应用名称，没有就创建一个
-
 ### 编译
 
-- linux
+#### linux
 
 ```shell
 g++ examples/src/main.cpp -I examples/src -I include -I thirdparty -I thirdparty/json/include -I thirdparty/libczh/include -lssl -lcrypto -lpthread -O2 -std=c++2a -o wxserver-linux
 ```
 
-- windows
+#### windows
 
+- 注意将OpenSSL的目录替换为你自己的。
 ```shell
 g++ examples/src/main.cpp -I examples/src -I "C:\Program Files\OpenSSL-Win64\include" -I include -I thirdparty -I thirdparty/json/include -I thirdparty/libczh/include -L "C:\Program Files\OpenSSL-Win64\lib" -lssl -lcrypto -l ws2_32 -l crypt32 -lpthread -O2 -std=c++2a -o wxserver-windows.exe
 ```
 
-注意将OpenSSL的目录替换为你自己的。
 
 ### 注意事项
 

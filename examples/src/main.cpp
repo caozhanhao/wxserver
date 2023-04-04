@@ -14,7 +14,6 @@
 #include "bot.hpp"
 #include "wxserver/wxserver.hpp"
 #include <string>
-#include <future>
 
 int main()
 {

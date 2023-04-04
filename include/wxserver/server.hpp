@@ -91,6 +91,33 @@ namespace ws
     Server() : inited(false), port(-1),
                new_task_queue([] { return new httplib::ThreadPool(4); }) {}
   
+    Server(int port_, int agent_id, const std::string &token, const std::string encoding_aes_key,
+           const std::string corp_id, const std::string corp_secret,
+           bool enable_console_logger, const std::string &logging_path = "")
+        : inited(true), port(port_), crypto(token, encoding_aes_key, corp_id),
+          wxcli(corp_id, corp_secret, agent_id),
+          new_task_queue([] { return new httplib::ThreadPool(4); })
+    {
+      if (!logging_path.empty())
+      {
+        if (enable_console_logger)
+        {
+          init_logger(Severity::NONE, Output::file_and_console, logging_path);
+        }
+        else
+        {
+          init_logger(Severity::NONE, Output::file);
+        }
+      }
+      else
+      {
+        if (enable_console_logger)
+        {
+          init_logger(Severity::NONE, Output::console);
+        }
+      }
+    }
+  
     Server(const Server &) = delete;
   
     Server &load_config(const czh::Node &config)
@@ -101,13 +128,25 @@ namespace ws
       auto corp_id = config["weixin"]["CorpID"].get<std::string>();
       auto corp_secret = config["weixin"]["CorpSecret"].get<std::string>();
       port = config["server"]["port"].get<int>();
+    
+      auto enable_console_logger = config["server"]["enable_console_logger"].get<bool>();
       if (!config["server"]["logging_path"].is<czh::value::Null>())
       {
-        init_logger(Severity::NONE, Output::file_and_console, config["server"]["logging_path"].get<std::string>());
+        if (enable_console_logger)
+        {
+          init_logger(Severity::NONE, Output::file_and_console, config["server"]["logging_path"].get<std::string>());
+        }
+        else
+        {
+          init_logger(Severity::NONE, Output::file, config["server"]["logging_path"].get<std::string>());
+        }
       }
       else
       {
-        init_logger(Severity::NONE, Output::console);
+        if (enable_console_logger)
+        {
+          init_logger(Severity::NONE, Output::console);
+        }
       }
     
       crypto = Crypto(token, encoding_aes_key, corp_id);

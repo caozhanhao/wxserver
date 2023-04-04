@@ -1,5 +1,6 @@
 server:
     port = 8345;
+    enable_console_logger = true;
     logging_path = null;
 end;
 
