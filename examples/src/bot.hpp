@@ -121,6 +121,7 @@ namespace ws_example
       if (proxy_port != -1)
       {
         cli.set_proxy(proxy, proxy_port);
+        cli.set_read_timeout(, 0);
       }
       cli.set_read_timeout(50, 0);
       auto res = cli.Post("/v1/chat/completions",
