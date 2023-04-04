@@ -19,16 +19,11 @@
 #include "msgcrypto.hpp"
 #include "wxcli.hpp"
 
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-
 #include "cpp-httplib/httplib.h"
-
-#include "libczh/include/libczh/czh.hpp"
 #include "libczh/czh.hpp"
 
 #include <functional>
 #include <set>
-#include <functional>
 
 namespace ws
 {
@@ -62,38 +57,6 @@ namespace ws
     MsgType msg_type;
   };
   
-  class Response
-  {
-  public:
-    enum class MsgType
-    {
-      none, text, file
-    };
-    
-    MsgType msg_type;
-    std::string data;
-    std::string to_user;
-  public:
-    Response() : msg_type(MsgType::none) {};
-    
-    void set_file(const std::string &path)
-    {
-      msg_type = MsgType::file;
-      data = path;
-    }
-    
-    void set_text(const std::string &res)
-    {
-      msg_type = MsgType::text;
-      data = res;
-    }
-  
-    void set_user(const std::string &user)
-    {
-      to_user = user;
-    }
-  };
-  
   czh::Node parse_config(const std::string &path)
   {
     czh::Czh config_czh(path, ::czh::InputMode::file);
@@ -116,18 +79,20 @@ namespace ws
   class Server
   {
   private:
-    using MsgHandle = std::function<void(const Request &, Response &)>;
+    using MsgHandle = std::function<void(const Request &, Message &)>;
     bool inited;
     int port;
     Crypto crypto;
     Cli wxcli;
     httplib::Server svr;
     MsgHandle msg_handle;
+    std::function<httplib::TaskQueue *(void)> new_task_queue;
   public:
-    Server() : inited(false), port(-1) {}
-    
+    Server() : inited(false), port(-1),
+               new_task_queue([] { return new httplib::ThreadPool(4); }) {}
+  
     Server(const Server &) = delete;
-    
+  
     Server &load_config(const czh::Node &config)
     {
       auto agent_id = config["weixin"]["AgentId"].get<int>();
@@ -144,7 +109,7 @@ namespace ws
       {
         init_logger(Severity::NONE, Output::console);
       }
-  
+    
       crypto = Crypto(token, encoding_aes_key, corp_id);
       wxcli.set_corp(corp_id, corp_secret, agent_id);
       
@@ -167,6 +132,7 @@ namespace ws
     
     Server &run()
     {
+      std::unique_ptr<httplib::TaskQueue> task_queue(new_task_queue());
       if (!inited)
       {
         critical(no_fmt, "Not inited.");
@@ -183,21 +149,29 @@ namespace ws
                 info(no_fmt, "Verify url successfully.");
               });
       svr.Post("/",
-               [this](const httplib::Request &req, httplib::Response &res)
+               [this, &task_queue](const httplib::Request &req, httplib::Response &res)
                {
                  auto a = req.body.find("<xml>");
                  auto b = req.body.find("</xml>");
                  auto req_xml = req.body.substr(a, b + 6);
-        
+  
                  auto msg_encrypt = details::xml_parse(req_xml, "Encrypt");
-                 auto plain_xml = crypto.decrypt_msg(req.get_param_value("msg_signature"),
-                                                     req.get_param_value("timestamp"),
-                                                     req.get_param_value("nonce"),
-                                                     details::xml_parse(req_xml, "Encrypt"));
-        
-                 Response wxres;
+                 std::string plain_xml;
+                 try
+                 {
+                   plain_xml = crypto.decrypt_msg(req.get_param_value("msg_signature"),
+                                                  req.get_param_value("timestamp"),
+                                                  req.get_param_value("nonce"),
+                                                  details::xml_parse(req_xml, "Encrypt"));
+                 }
+                 catch (std::runtime_error &err)
+                 {
+                   error(no_fmt, "Receiving wrong message.");
+                   return;
+                 }
+  
                  Request wxreq;
-        
+  
                  wxreq.content = details::xml_parse(plain_xml, "Content");
                  wxreq.user_id = details::xml_parse(plain_xml, "FromUserName");
                  if (auto type = details::xml_parse(plain_xml, "MsgType"); type == "text")
@@ -209,61 +183,32 @@ namespace ws
                    wxreq.msg_type = Request::MsgType::unknown;
                  }
   
+                 info(no_fmt, "From: ", wxreq.user_id, " | Content: ", wxreq.content);
+  
                  if (msg_handle)
                  {
-                   msg_handle(wxreq, wxres);
+                   task_queue->enqueue([this, wxreq]()
+                                       {
+                                         Message wxres;
+                                         msg_handle(wxreq, wxres);
+                                         if (wxres.to_user.empty())
+                                         {
+                                           wxres.set_user(wxreq.user_id);
+                                         }
+                                         send_message(wxres);
+                                       });
                  }
-  
-                 std::string notice;
-                 auto to_user_id = wxres.to_user.empty() ? wxreq.user_id : wxres.to_user;
-                 switch (wxres.msg_type)
-                 {
-                   case Response::MsgType::text:
-                     wxcli.send_text(wxres.data, to_user_id);
-                     break;
-                   case Response::MsgType::file:
-                     wxcli.send_file(wxres.data, to_user_id);
-                     break;
-                   case Response::MsgType::none:
-                     break;
-                   default:
-                     critical(no_fmt, "Unknown response type");
-                     break;
-                 }
-  
-                 notice += "From: " + wxreq.user_id +
-                           +" | Content: " + wxreq.content;
-  
-                 if (wxres.msg_type != Response::MsgType::none)
-                 {
-                   notice +=
-                       " | To: " + to_user_id
-                       + " | Response "
-                       + (wxres.msg_type == Response::MsgType::file ? "File: " : "Text: ")
-                       + wxres.data;
-                 }
-                 info(no_fmt, notice);
                });
       info(no_fmt, "Server started.");
       svr.listen("127.0.0.1", port);
+      task_queue->shutdown();
       return *this;
     }
   
-    Server &send_text(const std::string &msg, const std::string &id)
+    Server &send_message(const Message &msg)
     {
-      info(no_fmt,
-           "To: ", id,
-           " | Response Text: ", msg);
-      wxcli.send_text(msg, id);
-      return *this;
-    }
-  
-    Server &send_file(const std::string &path, const std::string &id)
-    {
-      info(no_fmt,
-           "To: ", id,
-           " | Response File: ", path);
-      wxcli.send_file(path, id);
+      info(no_fmt, "To: ", msg.to_user, " | Response ", msg_type_to_str(msg.msg_type), ": ", msg.data);
+      wxcli.send(msg);
       return *this;
     }
   };

@@ -17,10 +17,6 @@
 
 #include "logger.hpp"
 
-#include "openssl/aes.h"
-#include "openssl/sha.h"
-#include "openssl/evp.h"
-
 #if __has_include(<arpa/inet.h>)
 
 #include <arpa/inet.h>
@@ -31,6 +27,8 @@
 #else
 #error "wxserver: Can not find ntohl()"
 #endif
+
+#include "cryptopp/base64.h"
 
 #include <iostream>
 #include <array>
@@ -45,36 +43,8 @@ namespace ws
   std::string wx_decode_base64(const std::string &str_encrypt)
   {
     std::string ret;
-    int eq = 0;
-    for (auto r = str_encrypt.crbegin(); r < str_encrypt.crend(); r++)
-    {
-      if (*r == '=')
-      {
-        eq++;
-      }
-      else
-        break;
-    }
-    
-    int osize = int(str_encrypt.size());
-    char *out = (char *) malloc(osize);
-    if (out == nullptr)
-    {
-      critical(no_fmt, "malloc error");
-    }
-  
-    int rsize = 0;
-    rsize = EVP_DecodeBlock((unsigned char *) out, (const unsigned char *) str_encrypt.c_str(),
-                            int(str_encrypt.size()));
-    if (rsize > eq && rsize < osize)
-      ret.assign(out, rsize - eq);
-    else
-    {
-      critical(no_fmt, "EVP_DecodeBlock() error");
-    }
-  
-    free(out);
-    out = nullptr;
+    CryptoPP::StringSource ss(str_encrypt, str_encrypt.size(), true,
+                              new CryptoPP::Base64Decoder(new CryptoPP::StringSink(ret)));
     return ret;
   }
   
@@ -121,7 +91,7 @@ namespace ws
       result.append((char *) out, str_encrypt.size() - out[str_encrypt.size() - 1]);
     else
     {
-      critical(no_fmt, "error");
+      critical(no_fmt, "wx_decrypt_aes failed.");
     }
   
     free(out);
@@ -178,7 +148,8 @@ namespace ws
     {
       if (verify_sign(msg_sign, time_stamp, nonce, echo_str) != 0)
       {
-        critical(no_fmt, "verify sign failed.");
+        error(no_fmt, "verify sign failed.");
+        throw std::runtime_error("verify sign failed.");
       }
       return decrypt(echo_str);
     }
@@ -188,7 +159,8 @@ namespace ws
     {
       if (verify_sign(msg_sign, time_stamp, nonce, msg_encrypt) != 0)
       {
-        critical(no_fmt, "verify sign failed.");
+        error(no_fmt, "verify sign failed.");
+        throw std::runtime_error("verify sign failed.");
       }
       return decrypt(msg_encrypt);
     }
@@ -206,7 +178,9 @@ namespace ws
       std::string receiveid = msg_decrypt.substr(16 + 4 + msg_len);
       if (corpid != receiveid)
       {
-        critical(no_fmt, "receiveid('", receiveid, "') != corpid('", corpid, "')");
+        std::string err = "receiveid('" + receiveid + "') != corpid('" + corpid + "')";
+        error(no_fmt, err);
+        throw std::runtime_error(err);
       }
       return ret;
     }

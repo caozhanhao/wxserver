@@ -76,7 +76,7 @@ namespace ws_example
       past_user_inputs.emplace_back(user_input);
       generated_responses.emplace_back(ret);
       ws::info(ws::no_fmt, "Bot | UserInput: ", user_input, " | Generated: ", ret);
-      ws::info(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
+      //ws::info(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
       return ret;
     }
   };
@@ -121,6 +121,7 @@ namespace ws_example
       if (proxy_port != -1)
       {
         cli.set_proxy(proxy, proxy_port);
+        cli.set_read_timeout(, 0);
       }
       auto res = cli.Post("/v1/chat/completions",
                           httplib::Headers{{"Authorization", "Bearer " + token}},
@@ -128,17 +129,19 @@ namespace ws_example
       if (res == nullptr)
       {
         ws::error(ws::no_fmt, "Bot failed. ", httplib::to_string(res.error()));
-        return "An error occurred, please try again later.";
+        messages.pop_back();
+        return "An error occurred, please try again later. Error: \n" + httplib::to_string(res.error());
       }
       if (res->status != 200)
       {
         ws::error(ws::no_fmt, "Bot failed. ", res->body);
-        return "An error occurred, please try again later.";
+        messages.pop_back();
+        return "An error occurred, please try again later. Error: \n" + res->body;
       }
       auto ret = nlohmann::json::parse(res->body)["choices"][0]["message"]["content"].get<std::string>();
       messages.emplace_back(nlohmann::json::parse(res->body)["choices"][0]["message"]);
       ws::info(ws::no_fmt, "Bot | UserInput: ", user_input, " | Generated: ", ret);
-      ws::info(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
+      //ws::info(ws::no_fmt, "Request Json:", body.dump(), "Response: ", res->body);
       return ret;
     }
   };

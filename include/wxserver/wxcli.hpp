@@ -30,6 +30,53 @@
 
 namespace ws
 {
+  enum class MsgType
+  {
+    none, text, file, markdown, image
+  };
+  
+  std::string msg_type_to_str(MsgType type)
+  {
+    switch (type)
+    {
+      case MsgType::none:
+        return "none";
+      case MsgType::text:
+        return "text";
+      case MsgType::file:
+        return "file";
+      case MsgType::markdown:
+        return "markdown";
+      case MsgType::image:
+        return "image";
+    }
+    return "none";
+  }
+  
+  class Message
+  {
+  public:
+    MsgType msg_type;
+    std::string data;
+    std::string to_user;
+  public:
+    Message() : msg_type(MsgType::none) {};
+    
+    Message(MsgType msg_type_, std::string data_, std::string to_user_)
+        : msg_type(msg_type_), data(std::move(data_)), to_user(std::move(to_user_)) {}
+    
+    void set_content(MsgType msg_type_, const std::string &data_)
+    {
+      msg_type = msg_type_;
+      data = data_;
+    }
+    
+    void set_user(const std::string &user)
+    {
+      to_user = user;
+    }
+  };
+  
   class Cli
   {
   private:
@@ -41,52 +88,43 @@ namespace ws
     Cli() = default;
   
     Cli(const Cli &) = delete;
-  
+    
     Cli(std::string corp_id_, std::string corp_secret_, int agent_id_)
         : corp_id(std::move(corp_id_)), corp_secret(std::move(corp_secret_)), agent_id(agent_id_) {}
-  
+    
     void set_corp(const std::string &corpid_, const std::string corpsecret_, int agent_id_)
     {
       corp_id = corpid_;
       corp_secret = corpsecret_;
       agent_id = agent_id_;
     }
-  
-    void send_text(const std::string &msg, const std::string &id)
-    {
-      nlohmann::json postdata{
-          {"touser",                   id},
-          {"msgtype",                  "text"},
-          {"agentid",                  agent_id},
-          {"text",
-                                       {
-                                           {"content", msg}
-                                       }
-          },
-          {"safe",                     0},
-          {"enable_id_trans",          0},
-          {"enable_duplicate_check",   0},
-          {"duplicate_check_interval", 1800}
-      };
-      wxpost(postdata.dump());
-    }
     
-    void send_file(const std::string &path, const std::string &id)
+    void send(const Message &msg)
     {
+      auto type = msg_type_to_str(msg.msg_type);
       nlohmann::json postdata{
-          {"touser",                   id},
-          {"msgtype",                  "file"},
+          {"touser",                   msg.to_user},
+          {"msgtype",                  msg_type_to_str(msg.msg_type)},
           {"agentid",                  agent_id},
-          {"file",
-                                       {
-                                           {"media_id", get_media_id(path)}
-                                       }
-          },
+          {type,                       nlohmann::detail::value_t::null},
           {"safe",                     0},
           {"enable_id_trans",          0},
           {"enable_duplicate_check",   0},
           {"duplicate_check_interval", 1800}
       };
+      switch (msg.msg_type)
+      {
+        case MsgType::text:
+        case MsgType::markdown:
+          postdata[type] = {{"content", msg.data}};
+          break;
+        case MsgType::file:
+        case MsgType::image:
+          postdata[type] = {{"media_id", get_media_id(msg.data)}};
+          break;
+        default:
+          return;
+      }
       wxpost(postdata.dump());
     }
   
