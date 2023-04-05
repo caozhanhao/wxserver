@@ -78,9 +78,10 @@ namespace ws
   
   class Server
   {
-  private:
     using MsgHandle = std::function<void(const Request &, Message &)>;
+  private:
     bool inited;
+    std::string host;
     int port;
     Crypto crypto;
     Cli wxcli;
@@ -91,10 +92,10 @@ namespace ws
     Server() : inited(false), port(-1),
                new_task_queue([] { return new httplib::ThreadPool(4); }) {}
   
-    Server(int port_, int agent_id, const std::string &token, const std::string encoding_aes_key,
+    Server(std::string host_, int port_, int agent_id, const std::string &token, const std::string encoding_aes_key,
            const std::string corp_id, const std::string corp_secret,
            bool enable_console_logger, const std::string &logging_path = "")
-        : inited(true), port(port_), crypto(token, encoding_aes_key, corp_id),
+        : inited(true), host(std::move(host_)), port(port_), crypto(token, encoding_aes_key, corp_id),
           wxcli(corp_id, corp_secret, agent_id),
           new_task_queue([] { return new httplib::ThreadPool(4); })
     {
@@ -128,6 +129,7 @@ namespace ws
       auto corp_id = config["weixin"]["CorpID"].get<std::string>();
       auto corp_secret = config["weixin"]["CorpSecret"].get<std::string>();
       port = config["server"]["port"].get<int>();
+      host = config["server"]["host"].get<std::string>();
     
       auto enable_console_logger = config["server"]["enable_console_logger"].get<bool>();
       if (!config["server"]["logging_path"].is<czh::value::Null>())
@@ -238,8 +240,8 @@ namespace ws
                                        });
                  }
                });
-      info(no_fmt, "Server started.");
-      svr.listen("127.0.0.1", port);
+      info(no_fmt, "Server started. Host: ", host, ", Port: ", port);
+      svr.listen(host, port);
       task_queue->shutdown();
       return *this;
     }

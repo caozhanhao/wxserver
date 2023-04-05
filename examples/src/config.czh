@@ -1,4 +1,5 @@
 server:
+    host = "0.0.0.0"
     port = 8345;
     enable_console_logger = true;
     logging_path = null;

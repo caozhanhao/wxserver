@@ -89,7 +89,7 @@ server.send_message({ws::MsgType::markdown, "`hello world`", "caozhanhao"});
 ##### 直接初始化
 
 ```c++
-Server(int port_, int agent_id, const std::string& token, const std::string encoding_aes_key,
+Server(std::string host, int port_, int agent_id, const std::string& token, const std::string encoding_aes_key,
            const std::string corp_id, const std::string corp_secret,
            bool enable_console_logger, const std::string& logging_path = "")
 ```
@@ -106,11 +106,12 @@ server.load_config("config.czh");
 
 ###### config.czh
 
-| server               | info            |
-|----------------------|-----------------|
-| port                 | 运行端口         |
-| enable_console_logger      | 日志控制台输出, false不输出 |
-| logging_path | 日志文件, null不输出到文件 |
+| server                | info              |
+|-----------------------|-------------------|
+| host                  | 运行地址              |
+| port                  | 运行端口              |
+| enable_console_logger | 日志控制台输出, false不输出 |
+| logging_path          | 日志文件, null不输出到文件  |
 
 | weixin               | info                   |
 |----------------------|------------------------|
