@@ -14,6 +14,7 @@
 #include "bot.hpp"
 #include "wxserver/wxserver.hpp"
 #include <string>
+#include <map>
 
 int main()
 {
@@ -22,20 +23,27 @@ int main()
   server.load_config(config);
   
   // ChatGPT
-  ws_example::ChatGPT bot(config["openai"]["model"].get<std::string>(),
-                          config["openai"]["token"].get<std::string>());
+  ws_example::ChatGPT origin_bot(config["openai"]["model"].get<std::string>(),
+                                 config["openai"]["token"].get<std::string>());
   if (!config["openai"]["proxy"].is<czh::value::Null>())
   {
-    bot.set_proxy(config["openai"]["proxy"].get<std::string>(),
-                  config["openai"]["proxy_port"].get<int>());
+    origin_bot.set_proxy(config["openai"]["proxy"].get<std::string>(),
+                         config["openai"]["proxy_port"].get<int>());
   }
   //Hugging Face
-//  ws_example::HuggingFace bot(config["hugging_face"]["model"].get<std::string>(),
+//  ws_example::HuggingFace origin_bot(config["hugging_face"]["model"].get<std::string>(),
 //                          config["hugging_face"]["token"].get<std::string>());
   
+  std::map<std::string, ws_example::ChatGPT> bots;
+  
   server.add_msg_handle(
-      [&bot](const auto &req, auto &res)
+      [&bots, origin_bot](const auto &req, auto &res)
       {
+        if (bots.find(req.user_id) == bots.end())
+        {
+          bots[req.user_id] = origin_bot;
+        }
+        auto bot = bots[req.user_id];
         if (req.content == "clear conversation")
         {
           bot.clear_conversation();
