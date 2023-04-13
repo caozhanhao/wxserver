@@ -92,7 +92,7 @@ namespace ws_example
   public:
     ChatGPT(std::string model_, std::string api_token)
         : token(std::move(api_token)), model(std::move(model_)), proxy_port(-1) {}
-  
+    ChatGPT() = default;
     void change_model(const std::string &m)
     {
       model = m;

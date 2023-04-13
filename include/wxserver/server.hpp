@@ -130,7 +130,7 @@ namespace ws
       auto corp_secret = config["weixin"]["CorpSecret"].get<std::string>();
       port = config["server"]["port"].get<int>();
       host = config["server"]["host"].get<std::string>();
-    
+  
       auto enable_console_logger = config["server"]["enable_console_logger"].get<bool>();
       if (!config["server"]["logging_path"].is<czh::value::Null>())
       {
@@ -150,7 +150,7 @@ namespace ws
           init_logger(Severity::NONE, Output::console);
         }
       }
-    
+  
       crypto = Crypto(token, encoding_aes_key, corp_id);
       wxcli.set_corp(corp_id, corp_secret, agent_id);
       
@@ -205,9 +205,9 @@ namespace ws
                                                   req.get_param_value("nonce"),
                                                   details::xml_parse(req_xml, "Encrypt"));
                  }
-                 catch (std::runtime_error &err)
+                 catch (MsgCryptoError &err)
                  {
-                   error(no_fmt, "Receiving wrong message.");
+                   error(FormatWithLoc(no_fmt, err.location), err.what());
                    return;
                  }
   

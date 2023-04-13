@@ -39,9 +39,23 @@
 #include <string>
 #include <cstring>
 #include <map>
+#include <experimental/source_location>
+
 
 namespace ws
 {
+  class MsgCryptoError : public std::runtime_error
+  {
+  public:
+    std::experimental::source_location location;
+    
+    MsgCryptoError(std::string what, std::experimental::source_location location_
+    = std::experimental::source_location::current())
+        : std::runtime_error(std::move(what)), location(location_)
+    {
+    }
+  };
+  
   std::string wx_decode_base64(const std::string &str_encrypt)
   {
     std::string ret;
@@ -57,14 +71,14 @@ namespace ws
         break;
       }
     }
-  
+    
     int osize = int(str_encrypt.size());
     char *out = (char *) malloc(osize);
     if (out == nullptr)
     {
-      critical(no_fmt, "malloc error");
+      throw MsgCryptoError("malloc error");
     }
-  
+    
     int rsize = 0;
     rsize = EVP_DecodeBlock((unsigned char *) out, (const unsigned char *) str_encrypt.c_str(),
                             int(str_encrypt.size()));
@@ -74,9 +88,9 @@ namespace ws
     }
     else
     {
-      critical(no_fmt, "EVP_DecodeBlock() error");
+      throw MsgCryptoError("EVP_DecodeBlock() error");
     }
-  
+    
     free(out);
     out = nullptr;
     return ret;
@@ -87,7 +101,7 @@ namespace ws
     unsigned char out[SHA_DIGEST_LENGTH] = {0};
     if (SHA1((const unsigned char *) str.c_str(), str.size(), out) == nullptr)
     {
-      critical(no_fmt, "sha1 error");
+      throw MsgCryptoError("sha1 error");
     }
     
     std::string ret;
@@ -108,7 +122,7 @@ namespace ws
     auto out = (unsigned char *) malloc(str_encrypt.size());
     if (out == nullptr)
     {
-      critical(no_fmt, "malloc error");
+      throw MsgCryptoError("malloc error");
     }
   
     unsigned char ckey[32] = {0};
@@ -125,7 +139,7 @@ namespace ws
       result.append((char *) out, str_encrypt.size() - out[str_encrypt.size() - 1]);
     else
     {
-      critical(no_fmt, "wx_decrypt_aes failed.");
+      throw MsgCryptoError("wx_decrypt_aes failed.");
     }
   
     free(out);
@@ -182,8 +196,7 @@ namespace ws
     {
       if (verify_sign(msg_sign, time_stamp, nonce, echo_str) != 0)
       {
-        error(no_fmt, "verify sign failed.");
-        throw std::runtime_error("verify sign failed.");
+        throw MsgCryptoError("verify sign failed.");
       }
       return decrypt(echo_str);
     }
@@ -193,8 +206,7 @@ namespace ws
     {
       if (verify_sign(msg_sign, time_stamp, nonce, msg_encrypt) != 0)
       {
-        error(no_fmt, "verify sign failed.");
-        throw std::runtime_error("verify sign failed.");
+        throw MsgCryptoError("verify sign failed.");
       }
       return decrypt(msg_encrypt);
     }
@@ -212,9 +224,7 @@ namespace ws
       std::string receiveid = msg_decrypt.substr(16 + 4 + msg_len);
       if (corpid != receiveid)
       {
-        std::string err = "receiveid('" + receiveid + "') != corpid('" + corpid + "')";
-        error(no_fmt, err);
-        throw std::runtime_error(err);
+        throw MsgCryptoError("receiveid('" + receiveid + "') != corpid('" + corpid + "')");
       }
       return ret;
     }
