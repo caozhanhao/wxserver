@@ -167,7 +167,7 @@ namespace ws
         critical(no_fmt, "No such file.");
       }
     
-      file.ignore(std::numeric_limits<std::streamsize>::max());
+      file.ignore((std::numeric_limits<std::streamsize>::max)());
       size_t file_size = file.gcount();
       file.clear();
       file.seekg(std::ios_base::beg);

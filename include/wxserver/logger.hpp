@@ -21,11 +21,11 @@
 #include <memory>
 #include <chrono>
 #include <thread>
-#include <experimental/source_location>
+#include <source_location>
 
 namespace ws
 {
-  std::string location_to_str(const std::experimental::source_location &l)
+  std::string location_to_str(const std::source_location &l)
   {
     return std::string(l.file_name()) + ":" + std::to_string(l.line()) +
            ":" + l.function_name() + "()";
@@ -85,11 +85,11 @@ namespace ws
     std::chrono::system_clock::time_point time_point;
     Severity severity;
     size_t thread_id;
-    std::experimental::source_location location;
+    std::source_location location;
     std::string message;
   public:
     Record(std::chrono::system_clock::time_point time_point_, Severity severity_,
-           std::experimental::source_location location_)
+           std::source_location location_)
         : time_point(time_point_), severity(severity_), location(location_),
           thread_id(std::hash<std::thread::id>{}(std::this_thread::get_id()))
     {
@@ -235,16 +235,16 @@ namespace ws
   {
   private:
     std::string fmt;
-    std::experimental::source_location loc;
+    std::source_location loc;
   public:
-    FormatWithLoc(const std::string &fmt_, std::experimental::source_location loc_
-    = std::experimental::source_location::current())
+    FormatWithLoc(const std::string &fmt_, std::source_location loc_
+    = std::source_location::current())
         : fmt(fmt_), loc(loc_)
     {
     }
     
-    FormatWithLoc(const char *fmt_, std::experimental::source_location loc_
-    = std::experimental::source_location::current())
+    FormatWithLoc(const char *fmt_, std::source_location loc_
+    = std::source_location::current())
         : fmt(fmt_), loc(loc_)
     {
     }
@@ -254,7 +254,7 @@ namespace ws
       return fmt;
     }
     
-    std::experimental::source_location get_loc() const
+    std::source_location get_loc() const
     {
       return loc;
     }
@@ -274,7 +274,7 @@ namespace ws
     }
     else
     {
-      rec.template add_fmt(fmt.get_fmt(), std::forward<Args>(args)...);
+      rec.add_fmt(fmt.get_fmt(), std::forward<Args>(args)...);
     }
     get_logger_instance().add(rec);
   }
