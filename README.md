@@ -122,6 +122,12 @@ server.load_config("config.czh");
 
 注：以下为[示例](examples/src/bot.hpp)中需要的配置文件，不是wxserver必须的
 
+| bot                | info              |
+|-----------------------|-------------------|
+| bot                  | "hugging_face"或 "chatgpt" |
+| proxy      | Http代理地址，不需要则设为null       |
+| proxy_port | Http代理端口，不需要则设为null       |
+
 | hugging_face | info                                          |
 |--------------|-----------------------------------------------|
 | model        | 需Conversational，如ingen51/DialoGPT-medium-GPT4 |
@@ -129,10 +135,9 @@ server.load_config("config.czh");
 
 | openai     | info           |
 |------------|----------------|
-| model      | 如gpt-3.5-turbo |
+| model      | 如"gpt-3.5-turbo" |
 | token      | OpenAI token   |
-| proxy      | Http代理地址       |
-| proxy_port | Http代理端口       |
+
 ### 编译
 
 #### linux
@@ -167,4 +172,4 @@ g++ examples/src/main.cpp -I examples/src -I "C:\Program Files\OpenSSL-Win64\inc
 
 ### 相关链接
 
-- [搭建微信机器人（可接入ChatGPT等）](https://zhuanlan.zhihu.com/p/618651568)
+- [搭建微信机器人（可接入ChatGPT等）](https://czh.netlify.app/2023/04/01/%E6%90%AD%E5%BB%BA%E5%BE%AE%E4%BF%A1%E6%9C%BA%E5%99%A8%E4%BA%BA%EF%BC%88%E5%8F%AF%E6%8E%A5%E5%85%A5chatgpt%E7%AD%89%EF%BC%89/)

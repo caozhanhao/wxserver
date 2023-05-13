@@ -13,6 +13,12 @@ weixin:
     CorpSecret = "";
 end;
 
+bot:
+    bot = "hugging_face";
+    proxy = null;
+    proxy_port = null;
+end;
+
 hugging_face:
     model = "ingen51/DialoGPT-medium-GPT4";
     token = "";
@@ -21,6 +27,4 @@ end;
 openai:
     model = "gpt-3.5-turbo";
     token = "";
-    proxy = null;
-    proxy_port = null;
 end;

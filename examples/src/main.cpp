@@ -15,45 +15,51 @@
 #include "wxserver/wxserver.hpp"
 #include <string>
 #include <map>
+#include <memory>
 
 int main()
 {
   ws::Server server;
   auto config = ws::parse_config("config.czh");
   server.load_config(config);
-  
-  // ChatGPT
-  ws_example::ChatGPT origin_bot(config["openai"]["model"].get<std::string>(),
-                                 config["openai"]["token"].get<std::string>());
-  if (!config["openai"]["proxy"].is<czh::value::Null>())
+  std::shared_ptr<ws_example::BotCli> bot;
+
+  if (config["bot"]["bot"].get<std::string>() == "chatgpt")
   {
-    origin_bot.set_proxy(config["openai"]["proxy"].get<std::string>(),
-                         config["openai"]["proxy_port"].get<int>());
+    bot = std::make_shared<ws_example::ChatGPT>(config["openai"]["model"].get<std::string>(),
+      config["openai"]["token"].get<std::string>());
   }
-  //Hugging Face
-//  ws_example::HuggingFace origin_bot(config["hugging_face"]["model"].get<std::string>(),
-//                          config["hugging_face"]["token"].get<std::string>());
-  
-  std::map<std::string, ws_example::ChatGPT> bots;
-  
+  else if (config["bot"]["bot"].get<std::string>() == "hugging_face")
+  {
+    bot = std::make_shared<ws_example::HuggingFace>
+      (config["hugging_face"]["model"].get<std::string>(),
+        config["hugging_face"]["token"].get<std::string>());
+  }
+  else
+  {
+    std::cerr << "Unknown config[\"bot\"]" << std::endl;
+    return -1;
+  }
+
+  if (!config["bot"]["proxy"].is<czh::value::Null>())
+  {
+    bot->set_proxy(config["bot"]["proxy"].get<std::string>(),
+      config["bot"]["proxy_port"].get<int>());
+  }
+
   server.add_msg_handle(
-  [&bots, origin_bot](const auto &req, auto &res)
-  {
-  if (bots.find(req.user_id) == bots.end())
-  {
-  bots[req.user_id] = origin_bot;
-}
-auto& bot = bots[req.user_id];
-if (req.content == "clear conversation")
-{
-bot.clear_conversation();
-          res.set_content(ws::MsgType::text, "Cleared all conversations.");
-        }
-        else if (!req.content.empty())
-        {
-          res.set_content(ws::MsgType::text, bot.input(req.content));
-        }
-      });
+    [&bot](const auto& req, auto& res)
+    {
+      if (req.content == "clear conversation")
+      {
+        bot->clear_conversation(req.user_id);
+        res.set_content(ws::MsgType::text, "Cleared all conversations.");
+      }
+      else if (!req.content.empty())
+      {
+        res.set_content(ws::MsgType::text, bot->input(req.user_id, req.content));
+      }
+    });
   server.run();
   return 0;
 }
